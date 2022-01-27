@@ -1,44 +1,93 @@
 #include <SDL2/SDL_keycode.h>
 #include <ast.h>
 
-// FIXME: fix this horrible code pls
-
 AstNode parse_token(int *index, Tokens tokens)
 {
     AstNode node = {0};
 
     switch (tokens.data[*index].type)
     {
-
     case TOKEN_LPAREN:
     {
         node.type = AST_CALL;
 
-        if (tokens.data[*index + 1].type != TOKEN_SYMBOL)
+        if (*index + 1 > tokens.length || tokens.data[*index + 1].type != TOKEN_SYMBOL)
         {
-            printf("ERROR: expected symbol in function call\n");
+            fprintf(stderr, "ERROR: expected symbol in function call\n");
+			exit(-1);
         }
 
         node.call.name = tokens.data[++*index]._symbol;
 
-        while (tokens.data[*index].type != TOKEN_RPAREN)
+		if (*index + 1 > tokens.length)
         {
-            vec_push(&node.call.params, parse_token(index, tokens).value);
-            *index += 1;
+            fprintf(stderr, "ERROR: expected character ')' in function call\n");
+			exit(-1);
         }
+
+        while (tokens.data[++*index].type != TOKEN_RPAREN)
+            vec_push(&node.call.params, parse_token(index, tokens).value);
+
         break;
     }
 
     case TOKEN_NUMBER:
     {
         node.type = AST_VALUE;
+		node.value.type = AST_VAL_INT;
         node.value.int_ = tokens.data[*index]._num;
         break;
     }
 
-    default:
-        printf("todo: %d\n", tokens.data[*index].type);
+	case TOKEN_STRING:
+	{
+		node.type = AST_VALUE;
+		node.value.type = AST_VAL_STR;
+		node.value.str_ = tokens.data[*index]._string;
+		break;
+	}
 
+	case TOKEN_SYMBOL:
+	{
+		node.type = AST_VALUE;
+		node.value.type = AST_VAL_SYMBOL;
+		node.value.str_ = tokens.data[*index]._symbol;
+		break;
+	}
+
+	case TOKEN_REGISTER:
+	{
+		node.type = AST_VALUE;
+		node.value.type = AST_VAL_REG;
+		node.value.reg_ = tokens.data[*index]._register;
+		break;
+	}
+
+    default:
+        switch (tokens.data[*index].type)
+		{
+		case TOKEN_LPAREN:
+			fprintf(stderr, "ERROR: unexpected character '('\n");
+			break;
+
+		case TOKEN_RPAREN:
+			fprintf(stderr, "ERROR: unexpected character ')'\n");
+			break;
+
+		case TOKEN_LBRACKET:
+			fprintf(stderr, "ERROR: unexpected character '['\n");
+			break;
+
+		case TOKEN_RBRACKET:
+			fprintf(stderr, "ERROR: unexpected character ']'\n");
+			break;
+		
+		default:
+			fprintf(stderr, "ERROR: Unexpected error\n");
+			break;
+		}
+
+		exit(-1);
         break;
     }
 

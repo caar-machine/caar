@@ -15,6 +15,7 @@ typedef struct
         AST_VAL_INT,
         AST_VAL_STR,
         AST_VAL_SYMBOL,
+		AST_VAL_REG,
     } type;
 
     union
@@ -22,6 +23,7 @@ typedef struct
         int int_;
         char *str_;
         char *symbol_;
+		Register reg_;
     };
 
 } AstValue;

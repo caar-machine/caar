@@ -43,6 +43,8 @@ void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size)
     cpu->SP = MEMORY_SIZE;
     cpu->PC = 0x1000;
     cpu->disk_size = rom_size;
+    cpu->flags.EQ = 0;
+    cpu->flags.LT = 0;
 }
 
 static uint32_t u8_to_u32(const uint8_t *bytes)
@@ -314,9 +316,8 @@ void cpu_do_cycle(Cpu *cpu)
         switch (opcode)
         {
 
-        case 0: // cons
+        case 0x00: // cons
         {
-
             CPU_GET_LHS_AND_RHS();
 
             Cons *buffer = ram_allocate(cpu->ram);
@@ -465,10 +466,18 @@ void cpu_do_cycle(Cpu *cpu)
             {
                 cpu->flags.EQ = 1;
             }
-
             else
             {
                 cpu->flags.EQ = 0;
+            }
+
+			if (lhs < rhs)
+            {
+                cpu->flags.LT = 1;
+            }
+            else
+            {
+                cpu->flags.LT = 0;
             }
 
             cpu->PC = new_prev;
@@ -495,13 +504,33 @@ void cpu_do_cycle(Cpu *cpu)
             break;
         }
 
-        case 0x15: // IN
+		case 0x15: // JLT
+        {
+            uint32_t addr = get_val_from_special_byte(cpu);
+
+            if (cpu->flags.LT == 1)
+                cpu->PC = addr;
+
+            break;
+        }
+
+        case 0x16: // JGT
+        {
+            uint32_t addr = get_val_from_special_byte(cpu);
+
+            if (cpu->flags.LT == 0 && cpu->flags.EQ == 0)
+                cpu->PC = addr;
+
+            break;
+        }
+
+        case 0x17: // IN
         {
             printf("!! TODO: IN\n");
             break;
         }
 
-        case 0x16: // OUT
+        case 0x18: // OUT
         {
             CPU_GET_LHS_AND_RHS();
 
