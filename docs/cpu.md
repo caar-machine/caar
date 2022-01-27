@@ -15,7 +15,8 @@ SP -> Stack Pointer
 ```
 
 ## Flags
-EQ -> set if cmp instruction is successful
+EQ -> Set after a CMP instruction if the operands are equal
+LT -> Set after a CMP instruction if the first operator is less than the second one
 
 ## Opcodes
 
@@ -42,10 +43,10 @@ The following is the list of cpu opcodes:
 | 16 (0x10) | POP      | reg              | Pops the stack into reg                                          |
 | 17 (0x11) | JMP      | reg/addr         | Jumps to addr or addr stored in reg                              |
 | 18 (0x12) | CMP      | reg/val, reg/val | Compares two values, if they are equal, set EQ flag to 1, else 0 |
-| 19 (0x13) | JE       | reg/addr         | jmp if EQ is 1                                                   |
-| 20 (0x14) | JNE      | reg/addr         | jmp if EQ is 0                                                   |
-| 21 (0x15) | JLT      | reg/addr         | jmp if EQ is 0                                                   |
-| 22 (0x16) | JGT      | reg/addr         | jmp if EQ is 0                                                   |
+| 19 (0x13) | JE       | reg/addr         | jmp if EQ is set                                                 |
+| 20 (0x14) | JNE      | reg/addr         | jmp if EQ is clear                                               |
+| 21 (0x15) | JLT      | reg/addr         | jmp if LT is set                                                 |
+| 22 (0x16) | JGT      | reg/addr         | jmp if LT is clear and EQ is clear                               |
 | 23 (0x17) | IN       | reg/val, reg     | Read from port to reg                                            |
 | 24 (0x18) | OUT      | reg/val, reg/val | Write to port                                                    |
 

@@ -13,7 +13,7 @@ The goal of this project is to be able to run a somewhat functional operating sy
 - [ ] IO ports
 ### Assembler
 - [x] Tokenizer
-- [ ] Parser
+- [x] Parser
 - [ ] Codegen
 - [ ] preprocessor
 

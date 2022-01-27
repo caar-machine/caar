@@ -5,7 +5,7 @@
 #define TOKEN(CHAR, TYPE)     \
     case CHAR:                \
         curr.type = TYPE;     \
-		vec_push(&ret, curr); \
+        vec_push(&ret, curr); \
         break;
 
 char *str_while(char **s, bool (*callback)(char c))
@@ -18,7 +18,7 @@ char *str_while(char **s, bool (*callback)(char c))
         vec_push(&ret, **s);
         *s += 1;
     }
-	*s -= 1;
+    *s -= 1;
 
     return ret.data;
 }
@@ -61,8 +61,8 @@ Tokens lex(char *s)
             curr.type = TOKEN_STRING;
 
             curr._string = str_while(&s, is_not_quote);
-			vec_push(&ret, curr);
-			s++;
+            vec_push(&ret, curr);
+            s++;
 
             break;
         }
@@ -73,7 +73,7 @@ Tokens lex(char *s)
             {
                 curr.type = TOKEN_SYMBOL;
                 curr._symbol = str_while(&s, is_symbol);
-				vec_push(&ret, curr);
+                vec_push(&ret, curr);
             }
             else if (isdigit(*s))
             {
@@ -82,74 +82,74 @@ Tokens lex(char *s)
                 char *num = str_while(&s, is_digit);
 
                 sscanf(num, "%d", &curr._num);
-        		vec_push(&ret, curr);
+                vec_push(&ret, curr);
             }
-			else if (*s == '#')
-			{
-				curr.type = TOKEN_REGISTER;
-				s++;
-				switch (tolower(*s))
-				{
-				case 'a':
-					curr._register = REG_A;
-					break;
+            else if (*s == '#')
+            {
+                curr.type = TOKEN_REGISTER;
+                s++;
+                switch (tolower(*s))
+                {
+                case 'a':
+                    curr._register = REG_A;
+                    break;
 
-				case 'b':
-					curr._register = REG_B;
-					break;
+                case 'b':
+                    curr._register = REG_B;
+                    break;
 
-				case 'c':
-					curr._register = REG_C;
-					break;
+                case 'c':
+                    curr._register = REG_C;
+                    break;
 
-				case 'd':
-					curr._register = REG_D;
-					break;
+                case 'd':
+                    curr._register = REG_D;
+                    break;
 
-				case 'e':
-					curr._register = REG_E;
-					break;
+                case 'e':
+                    curr._register = REG_E;
+                    break;
 
-				case 'f':
-					curr._register = REG_F;
-					break;
+                case 'f':
+                    curr._register = REG_F;
+                    break;
 
-				case 'g':
-					curr._register = REG_G;
-					break;
+                case 'g':
+                    curr._register = REG_G;
+                    break;
 
-				case 'h':
-					curr._register = REG_H;
-					break;
+                case 'h':
+                    curr._register = REG_H;
+                    break;
 
-				case 'p':
-					s++;
-					if (tolower(*s) == 'c')
-					{
-						curr._register = REG_PC;
-					}
-					break;
+                case 'p':
+                    s++;
+                    if (tolower(*s) == 'c')
+                    {
+                        curr._register = REG_PC;
+                    }
+                    break;
 
-				case 's':
-					s++;
-					if (tolower(*s) == 'p')
-					{
-						curr._register = REG_PC;
-					}
-					break;
+                case 's':
+                    s++;
+                    if (tolower(*s) == 'p')
+                    {
+                        curr._register = REG_PC;
+                    }
+                    break;
 
-				default:
-					fprintf(stderr, "Unknown register: %c\n", *s);
-					exit(-1);
-					break;
-				}
+                default:
+                    fprintf(stderr, "Unknown register: %c\n", *s);
+                    exit(-1);
+                    break;
+                }
 
-				vec_push(&ret, curr);
-			}
+                vec_push(&ret, curr);
+            }
         }
         }
-		
-		s++;
+
+        s++;
     }
 
     return ret;
