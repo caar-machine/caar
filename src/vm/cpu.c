@@ -471,7 +471,7 @@ void cpu_do_cycle(Cpu *cpu)
                 cpu->flags.EQ = 0;
             }
 
-			if (lhs < rhs)
+            if (lhs < rhs)
             {
                 cpu->flags.LT = 1;
             }
@@ -504,7 +504,7 @@ void cpu_do_cycle(Cpu *cpu)
             break;
         }
 
-		case 0x15: // JLT
+        case 0x15: // JLT
         {
             uint32_t addr = get_val_from_special_byte(cpu);
 
