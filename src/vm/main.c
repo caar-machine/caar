@@ -91,7 +91,16 @@ int main(int argc, char **argv)
     }
 
     info("starting CAAR..");
-    info("ram size is %d mb", MEMORY_SIZE / 1024 / 1024);
+
+    if ((MEMORY_SIZE / 1024 / 1024) < 8)
+    {
+        warn("memory size under 8mb is not recommended, the system might not work");
+    }
+
+    else
+    {
+        info("ram size is %d mb", MEMORY_SIZE / 1024 / 1024);
+    }
 
     if (!file)
     {

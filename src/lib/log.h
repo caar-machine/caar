@@ -8,10 +8,11 @@ typedef enum
     LOG_WARN,
 } LogLevel;
 
-void _log(LogLevel level, char *fmt, ...);
+void _log(LogLevel level, char *module, char *fmt, ...);
+#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-#define error(msg, ...) _log(LOG_ERROR, msg __VA_OPT__(, ) __VA_ARGS__)
-#define info(msg, ...) _log(LOG_INFO, msg __VA_OPT__(, ) __VA_ARGS__)
-#define warn(msg, ...) _log(LOG_WARN, msg __VA_OPT__(, ) __VA_ARGS__)
+#define error(msg, ...) _log(LOG_ERROR, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
+#define info(msg, ...) _log(LOG_INFO, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
+#define warn(msg, ...) _log(LOG_WARN, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
 
 #endif
