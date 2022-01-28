@@ -12,8 +12,13 @@ typedef struct
 
     struct
     {
+<<<<<<< HEAD
         uint8_t EQ : 1;
         uint8_t LT : 1;
+=======
+      uint8_t EQ : 1;
+			uint8_t LT : 1;
+>>>>>>> 1f34b3cf0a7af70929583035d861757db7a6e4ea
     } flags;
 
     Ram *ram;
