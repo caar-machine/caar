@@ -1,4 +1,3 @@
-#include <SDL2/SDL_keycode.h>
 #include <ast.h>
 
 AstNode parse_token(int *index, Tokens tokens)
@@ -63,30 +62,15 @@ AstNode parse_token(int *index, Tokens tokens)
         break;
     }
 
+    case TOKEN_RPAREN:
+    case TOKEN_LBRACKET:
+    case TOKEN_RBRACKET:
+        fprintf(stderr, "ERROR: unexpected token\n");
+        exit(-1);
+        break;
+
     default:
-        switch (tokens.data[*index].type)
-        {
-        case TOKEN_LPAREN:
-            fprintf(stderr, "ERROR: unexpected character '('\n");
-            break;
-
-        case TOKEN_RPAREN:
-            fprintf(stderr, "ERROR: unexpected character ')'\n");
-            break;
-
-        case TOKEN_LBRACKET:
-            fprintf(stderr, "ERROR: unexpected character '['\n");
-            break;
-
-        case TOKEN_RBRACKET:
-            fprintf(stderr, "ERROR: unexpected character ']'\n");
-            break;
-
-        default:
-            fprintf(stderr, "ERROR: Unexpected error\n");
-            break;
-        }
-
+        fprintf(stderr, "ERROR: Unexpected error\n");
         exit(-1);
         break;
     }
@@ -104,6 +88,22 @@ Ast parse(Tokens tokens)
         AstNode curr = parse_token(&i, tokens);
 
         vec_push(&ast, curr);
+    }
+
+    return ast;
+}
+
+Ast astvalues_to_ast(AstValues values)
+{
+    Ast ast = {0};
+    vec_init(&ast);
+
+    for (int i = 0; i < values.length; i++)
+    {
+        AstNode node = {0};
+        node.type = AST_VALUE;
+        node.value = values.data[i];
+        vec_push(&ast, node);
     }
 
     return ast;

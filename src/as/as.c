@@ -1,5 +1,6 @@
 #include <as.h>
 #include <ast.h>
+#include <codegen.h>
 #include <lex.h>
 #include <stdio.h>
 
@@ -24,7 +25,22 @@ void as_assemble(char *input)
 
     fread(text, 1, size, fp);
 
+    fclose(fp);
+
     Tokens tokens = lex(text);
 
-    parse(tokens);
+    free(text);
+
+    Ast ast = parse(tokens);
+
+    Bytes bytes = codegen(ast);
+
+    for (int i = 0; i < bytes.length; i++)
+    {
+        printf("%02X\n", bytes.data[i]);
+    }
+
+    vec_deinit(&bytes);
+    vec_deinit(&ast);
+    vec_deinit(&tokens);
 }

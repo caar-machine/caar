@@ -15,15 +15,15 @@ typedef struct
         AST_VAL_INT,
         AST_VAL_STR,
         AST_VAL_SYMBOL,
-		AST_VAL_REG,
+        AST_VAL_REG,
     } type;
 
     union
     {
-        int int_;
+        unsigned int int_;
         char *str_;
         char *symbol_;
-		Register reg_;
+        Register reg_;
     };
 
 } AstValue;
@@ -51,5 +51,6 @@ typedef struct
 typedef vec_t(AstNode) Ast;
 
 Ast parse(Tokens tokens);
+Ast astvalues_to_ast(AstValues value);
 
 #endif
