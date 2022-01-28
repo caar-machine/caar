@@ -1,5 +1,6 @@
 #include <cpu.h>
 #include <errno.h>
+#include <lib/log.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,6 +55,13 @@ int load_file(char *file, Ram *ram)
     return size;
 }
 
+uint32_t ram_size = 16;
+
+uint32_t get_memory_size()
+{
+    return ram_size * 1024 * 1024;
+}
+
 int main(int argc, char **argv)
 {
     shift(&argc, &argv);
@@ -61,8 +69,6 @@ int main(int argc, char **argv)
     Ram ram = {0};
     Cpu cpu = {0};
     char *file = NULL;
-
-    ram_init(&ram);
 
     while (argc > 0)
     {
@@ -73,11 +79,27 @@ int main(int argc, char **argv)
             file = shift(&argc, &argv);
         }
 
+        else if (strcmp(arg, "-m") == 0)
+        {
+            sscanf(shift(&argc, &argv), "%d", (int *)&ram_size);
+        }
+
         else
         {
             printf("Unknown option: %s\n", arg);
         }
     }
+
+    info("starting CAAR..");
+    info("ram size is %d mb", MEMORY_SIZE / 1024 / 1024);
+
+    if (!file)
+    {
+        error("no bootrom specified, try passing -rom to the emulator");
+        exit(-1);
+    }
+
+    ram_init(&ram);
 
     int size = load_file(file, &ram);
 

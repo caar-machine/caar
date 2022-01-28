@@ -1,5 +1,6 @@
 #include "ram.h"
 #include <cpu.h>
+#include <lib/log.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -42,7 +43,7 @@ void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size)
     cpu->ram = ram;
     cpu->SP = MEMORY_SIZE;
     cpu->PC = 0x1000;
-    cpu->disk_size = rom_size;
+    cpu->rom_size = rom_size;
     cpu->flags.EQ = 0;
     cpu->flags.LT = 0;
 }
@@ -63,7 +64,10 @@ static void u32_to_u8(const uint32_t u32, uint8_t *u8)
 
 static uint8_t fetch(Cpu *cpu)
 {
-    return ram_read(cpu->PC++, cpu->ram);
+    uint32_t value = 0;
+    ram_read(cpu->PC++, MEM_BYTE, &value, cpu->ram);
+
+    return value;
 }
 
 static void push(uint32_t what, Cpu *cpu)
@@ -99,12 +103,8 @@ static uint32_t pop(Cpu *cpu)
         return 0;
     }
 
-    uint8_t a[4] = {ram_read(cpu->SP - 3, cpu->ram),
-                    ram_read(cpu->SP - 2, cpu->ram),
-                    ram_read(cpu->SP - 1, cpu->ram),
-                    ram_read(cpu->SP, cpu->ram)};
-
-    uint32_t ret = u8_to_u32(a);
+    uint32_t ret = 0;
+    ram_read(cpu->SP - 4, MEM_4_BYTES, &ret, cpu->ram);
 
     cpu->SP += 4;
 
@@ -309,7 +309,7 @@ static void pop_from_special_byte(Cpu *cpu)
 
 void cpu_do_cycle(Cpu *cpu)
 {
-    if (cpu->PC - 0x1000 < cpu->disk_size)
+    if (cpu->PC - 0x1000 < cpu->rom_size)
     {
         uint8_t opcode = fetch(cpu);
 
@@ -355,7 +355,10 @@ void cpu_do_cycle(Cpu *cpu)
 
             (void)lhs;
 
-            set_from_special_byte(ram_read(rhs, cpu->ram), cpu);
+            uint32_t value = 0;
+            ram_read(rhs, MEM_BYTE, &value, cpu->ram);
+
+            set_from_special_byte(value, cpu);
 
             cpu->PC = new_prev;
 
@@ -526,7 +529,7 @@ void cpu_do_cycle(Cpu *cpu)
 
         case 0x17: // IN
         {
-            printf("!! TODO: IN\n");
+            error("TODO: in");
             break;
         }
 
@@ -543,7 +546,8 @@ void cpu_do_cycle(Cpu *cpu)
 
         default:
         {
-            printf("\033[1;31mERROR:\033[0m Invalid opcode %x\n", opcode);
+            warn("invalid opcode: %x", opcode);
+            break;
         }
         }
     }

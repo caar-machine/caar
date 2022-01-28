@@ -1,8 +1,12 @@
 #include <gen.h>
-#include <map.h>
+#include <lib/map.h>
 
 Bytes _codegen(Ast ast, size_t *i, map_str_t labels)
 {
+    (void)ast;
+    (void)i;
+    (void)labels;
+
     Bytes ret = {};
     vec_init(&ret);
 

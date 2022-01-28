@@ -12,12 +12,12 @@ typedef struct
 
     struct
     {
-      uint8_t EQ : 1;
-			uint8_t LT : 1;
+        uint8_t EQ : 1;
+        uint8_t LT : 1;
     } flags;
 
     Ram *ram;
-    size_t disk_size;
+    size_t rom_size;
 } Cpu;
 
 typedef struct __attribute__((packed))

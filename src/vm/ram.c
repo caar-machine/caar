@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/mman.h>
 
 #define BLOCKS_COUNT 4096
 
@@ -10,9 +11,7 @@ size_t free_blocks_ptr = BLOCKS_COUNT - 1;
 
 void ram_init(Ram *ram)
 {
-    ram->buffer = malloc(MEMORY_SIZE);
-
-    memset(ram->buffer, 0, MEMORY_SIZE);
+    ram->buffer = calloc(MEMORY_SIZE, sizeof(uint8_t));
 
     for (size_t i = 0; i < BLOCKS_COUNT; i++)
     {
@@ -27,9 +26,16 @@ void ram_write(uint32_t addr, uint32_t data, Ram *ram)
     ram->buffer[addr] = data;
 }
 
-uint8_t ram_read(uint32_t addr, Ram *ram)
+void ram_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)
 {
-    return ram->buffer[addr];
+    void *mem = ram->buffer + addr;
+
+    if (size == MEM_BYTE)
+        *value = *(uint8_t *)mem;
+    else if (size == MEM_2_BYTES)
+        *value = *(uint16_t *)mem;
+    else if (size == MEM_4_BYTES)
+        *value = *(uint32_t *)mem;
 }
 
 void *ram_allocate(Ram *ram)

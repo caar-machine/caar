@@ -1,5 +1,5 @@
 #include <ast.h>
-#include <vec.h>
+#include <lib/vec.h>
 
 typedef vec_t(unsigned char) Bytes;
 
