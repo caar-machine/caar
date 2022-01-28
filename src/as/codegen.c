@@ -378,10 +378,12 @@ Bytes _codegen(Ast ast, int *index, ByteMap opcodes, LabelMap *labels, bool topl
 					exit(1);
 				}
 				
-				for (int i = 0; i < strlen(ast.data[*index].value.str_); i++)
+				for (size_t i = 0; i < strlen(ast.data[*index].value.str_); i++)
 				{
 					vec_push(&ret, ast.data[*index].value.str_[i]);
 				}
+				
+				break;
 			}
 
             case AST_VAL_REG:

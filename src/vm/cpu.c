@@ -43,11 +43,7 @@ void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size)
     cpu->ram = ram;
     cpu->SP = MEMORY_SIZE;
     cpu->PC = 0x1000;
-<<<<<<< HEAD
     cpu->rom_size = rom_size;
-=======
-    cpu->disk_size = rom_size;
->>>>>>> 1f34b3cf0a7af70929583035d861757db7a6e4ea
     cpu->flags.EQ = 0;
     cpu->flags.LT = 0;
 }
