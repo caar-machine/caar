@@ -15,8 +15,11 @@ SP -> Stack Pointer
 ```
 
 ## Flags
+```
 EQ -> Set after a CMP instruction if the operands are equal
-LT -> Set after a CMP instruction if the first operator is less than the second one
+
+LT -> Set after a CMP instruction if the first operand is smaller than the second one
+```
 
 ## Opcodes
 
