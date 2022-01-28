@@ -19,6 +19,7 @@ char *str_while(char **s, bool (*callback)(char c))
         *s += 1;
     }
     *s -= 1;
+    vec_push(&ret, '\0');
 
     return ret.data;
 }
@@ -81,7 +82,7 @@ Tokens lex(char *s)
 
                 char *num = str_while(&s, is_digit);
 
-                sscanf(num, "%d", &curr._num);
+                sscanf(num, "%u", &curr._num);
                 vec_push(&ret, curr);
             }
             else if (*s == '#')

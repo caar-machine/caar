@@ -5,7 +5,7 @@
  * under the terms of the MIT license. See LICENSE for details.
  */
 
-#include "map.h"
+#include "lib/map.h"
 #include <stdlib.h>
 #include <string.h>
 

@@ -11,21 +11,21 @@ typedef enum
     TOKEN_NUMBER,
     TOKEN_STRING,
     TOKEN_SYMBOL,
-	TOKEN_REGISTER,
+    TOKEN_REGISTER,
 } TokenType;
 
 typedef enum
 {
     REG_A,
-	REG_B,
-	REG_C,
-	REG_D,
-	REG_E,
-	REG_F,
-	REG_G,
-	REG_H,
-	REG_PC,
-	REG_SP,
+    REG_B,
+    REG_C,
+    REG_D,
+    REG_E,
+    REG_F,
+    REG_G,
+    REG_H,
+    REG_PC,
+    REG_SP,
 } Register;
 
 typedef struct
@@ -35,9 +35,9 @@ typedef struct
     union
     {
         char *_string;
-        int _num;
+        unsigned int _num;
         char *_symbol;
-		Register _register;
+        Register _register;
     };
 
 } Token;
