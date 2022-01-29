@@ -5,6 +5,8 @@
 #include <lib/map.h>
 #include <stdbool.h>
 
+static uint32_t current_addr = 0;
+
 char *str_to_lower(char *str)
 {
     char *ret = str;
@@ -56,8 +58,8 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
         else if (val > 0xFF)
         {
             // 2 bytes
-            vec_push(bytes, _bytes[0]);
             vec_push(bytes, _bytes[1]);
+            vec_push(bytes, _bytes[0]);
         }
         else
         {
@@ -80,11 +82,10 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
         vec_push(bytes, 0x29);
 
         Byte *_bytes = (Byte *)addr;
-
-        vec_push(bytes, _bytes[0]);
-        vec_push(bytes, _bytes[1]);
-        vec_push(bytes, _bytes[2]);
         vec_push(bytes, _bytes[3]);
+        vec_push(bytes, _bytes[2]);
+        vec_push(bytes, _bytes[1]);
+        vec_push(bytes, _bytes[0]);
 
         break;
     }
@@ -126,7 +127,22 @@ void codegen_call(AstCall call, LabelMap *labels, ByteMap opcodes, Bytes *bytes)
 
     if (!opcode)
     {
-        error("No such instruction: %s", call.name);
+        if (!strcmp(call.name, "org"))
+        {
+            current_addr = call.params.data[0].int_;
+            return;
+        }
+
+        else if (!strcmp(call.name, "label"))
+        {
+            map_set(labels, call.params.data->str_, current_addr);
+            return;
+        }
+
+        else
+        {
+            error("No such instruction: %s", call.name);
+        }
     }
 
     vec_push(bytes, *opcode);
@@ -141,6 +157,8 @@ Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap labels)
 {
     Bytes ret;
     vec_init(&ret);
+
+    size_t prev_len = 0;
 
     for (int i = 0; i < ast.length; i++)
     {
@@ -158,6 +176,9 @@ Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap labels)
             break;
         }
         }
+
+        current_addr += (ret.length - prev_len);
+        prev_len = ret.length;
     }
 
     return ret;

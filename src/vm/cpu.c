@@ -209,7 +209,6 @@ void cpu_do_cycle(Cpu *cpu)
         case 0x10: // pop
         {
             pop_from_special_byte(cpu);
-            info("cpu->A is %d", cpu->A);
             break;
         }
 
@@ -253,6 +252,7 @@ void cpu_do_cycle(Cpu *cpu)
 
             if (cpu->flags.EQ == 1)
                 cpu->PC = addr;
+            cpu->PC++;
 
             break;
         }

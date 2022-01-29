@@ -114,10 +114,10 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         }
 
         // 2 bytes
-
         if (sspec == 0x27)
         {
-            uint8_t ret = fetch16(cpu);
+            uint16_t ret = fetch16(cpu);
+
             if (size)
                 *size = 4;
 
