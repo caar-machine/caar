@@ -14,7 +14,7 @@ The goal of this project is to be able to run a somewhat functional operating sy
 ### Assembler
 - [x] Tokenizer
 - [x] Parser
-- [ ] Codegen
+- [x] Codegen
 - [ ] preprocessor
 
 ### R5RS compiler
