@@ -16,6 +16,7 @@ The goal of this project is to be able to run a somewhat functional operating sy
 - [x] Parser
 - [x] Codegen
 - [ ] preprocessor
+- [ ] Semantic checks
 
 ### R5RS compiler
 - [ ] everything
