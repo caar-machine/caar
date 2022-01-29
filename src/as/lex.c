@@ -16,7 +16,13 @@ char *str_while(char **s, bool (*callback)(char c))
 
     while (callback(**s))
     {
+        if (!callback(**s))
+        {
+            break;
+        }
+
         vec_push(&ret, **s);
+
         *s += 1;
     }
     *s -= 1;
@@ -132,11 +138,13 @@ Tokens lex(char *s)
                         curr._register = REG_PC;
                     }
                     break;
+
                 case '\\':
                 {
                     s++;
                     curr.type = TOKEN_CHAR;
                     curr._char = *s;
+
                     break;
                 }
 

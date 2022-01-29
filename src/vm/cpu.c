@@ -51,8 +51,9 @@
     uint32_t lhs = get_val_from_special_byte(&inst_size, cpu); \
     uint32_t prev_pc = cpu->PC;                                \
     uint32_t rhs = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t new_prev = prev_pc + inst_size;                   \
-    cpu->PC = new_prev;
+    uint32_t new_prev = cpu->PC;                               \
+    (void)prev_pc;                                             \
+    (void)new_prev;
 
 void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size)
 {
@@ -197,13 +198,10 @@ void cpu_do_cycle(Cpu *cpu)
 
         case 0xF: // push
         {
-            uint32_t prev_pc = cpu->PC;
-            uint32_t val = get_val_from_special_byte(NULL, cpu);
+            uint32_t inst_size = 0;
+            uint32_t val = get_val_from_special_byte(&inst_size, cpu);
 
             push(val, cpu);
-
-            cpu->PC += (cpu->PC - prev_pc);
-            cpu->PC++;
 
             break;
         }
@@ -211,6 +209,7 @@ void cpu_do_cycle(Cpu *cpu)
         case 0x10: // pop
         {
             pop_from_special_byte(cpu);
+            info("cpu->A is %d", cpu->A);
             break;
         }
 
@@ -305,7 +304,7 @@ void cpu_do_cycle(Cpu *cpu)
 
         default:
         {
-            warn("invalid opcode: %x", opcode);
+            warn("invalid opcode: %x at PC=%x", opcode, cpu->PC);
             break;
         }
         }

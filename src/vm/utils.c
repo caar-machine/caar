@@ -36,7 +36,7 @@ void push(uint32_t what, Cpu *cpu)
 {
     cpu->SP -= 4;
 
-    if ((cpu->SP - STACK_SIZE) == 0)
+    if (cpu->SP == STACK_SIZE)
     {
         error("stack overflow");
     }
@@ -53,7 +53,7 @@ void push(uint32_t what, Cpu *cpu)
     }
 
     else
-        ram_write(cpu->SP, what, cpu->ram);
+        ram_write(cpu->SP - 4, what, cpu->ram);
 }
 
 uint32_t pop(Cpu *cpu)
@@ -88,7 +88,7 @@ static uint16_t fetch16(Cpu *cpu)
 
 #define CPU_REG_STUB(reg) \
     if (size)             \
-        *size = 2;        \
+        *size = 1;        \
     return cpu->reg;
 
 uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
@@ -110,7 +110,6 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
 
             if (size)
                 *size = 3;
-
             return ret;
         }
 
@@ -202,13 +201,6 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     return 0;
 }
 
-static uint32_t pop32(Cpu *cpu)
-{
-    uint8_t a[4] = {pop(cpu), pop(cpu), pop(cpu), pop(cpu)};
-
-    return u8_to_u32(a);
-}
-
 #undef CPU_REG_STUB
 
 #define CPU_REG_STUB(reg) \
@@ -273,32 +265,5 @@ void set_from_special_byte(uint32_t val, Cpu *cpu)
 
 void pop_from_special_byte(Cpu *cpu)
 {
-
-    uint32_t specifier = fetch(cpu);
-
-    switch (specifier)
-    {
-    case 0x1b: // Register A
-    {
-        uint8_t sspec = fetch(cpu);
-
-        uint32_t val = 0;
-
-        // 1 byte
-        if (sspec == 0x27)
-        {
-            val = pop(cpu);
-        }
-
-        // 4 bytes
-        else if (sspec == 0x30)
-        {
-            val = pop32(cpu);
-        }
-
-        cpu->A = val;
-
-        break;
-    }
-    }
+    set_from_special_byte(pop(cpu), cpu);
 }
