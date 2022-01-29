@@ -1,1 +1,5 @@
-(push 0)
+(out 0 #\h)
+(out 0 #\e)
+(out 0 #\l)
+(out 0 #\l)
+(out 0 #\o)

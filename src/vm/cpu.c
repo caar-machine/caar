@@ -49,7 +49,7 @@
     (void)start_pc;                                            \
     uint32_t inst_size = 0;                                    \
     uint32_t lhs = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t prev_pc = cpu->PC += inst_size;                   \
+    uint32_t prev_pc = cpu->PC;                                \
     uint32_t rhs = get_val_from_special_byte(&inst_size, cpu); \
     uint32_t new_prev = prev_pc + inst_size;                   \
     cpu->PC = new_prev;
@@ -298,7 +298,8 @@ void cpu_do_cycle(Cpu *cpu)
 
             CPU_GET_LHS_AND_RHS();
 
-            io_write(rhs, lhs);
+            io_write(lhs, rhs);
+
             break;
         }
 

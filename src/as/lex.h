@@ -11,6 +11,7 @@ typedef enum
     TOKEN_NUMBER,
     TOKEN_STRING,
     TOKEN_SYMBOL,
+    TOKEN_CHAR,
     TOKEN_REGISTER,
 } TokenType;
 
@@ -38,6 +39,7 @@ typedef struct
         unsigned int _num;
         char *_symbol;
         Register _register;
+        char _char;
     };
 
 } Token;

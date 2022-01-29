@@ -1,5 +1,6 @@
 #include <ctype.h>
 #include <lex.h>
+#include <lib/log.h>
 #include <stdbool.h>
 
 #define TOKEN(CHAR, TYPE)     \
@@ -85,6 +86,7 @@ Tokens lex(char *s)
                 sscanf(num, "%u", &curr._num);
                 vec_push(&ret, curr);
             }
+
             else if (*s == '#')
             {
                 curr.type = TOKEN_REGISTER;
@@ -130,6 +132,13 @@ Tokens lex(char *s)
                         curr._register = REG_PC;
                     }
                     break;
+                case '\\':
+                {
+                    s++;
+                    curr.type = TOKEN_CHAR;
+                    curr._char = *s;
+                    break;
+                }
 
                 case 's':
                     s++;
@@ -140,7 +149,7 @@ Tokens lex(char *s)
                     break;
 
                 default:
-                    fprintf(stderr, "Unknown register: %c\n", *s);
+                    error("Unknown register: %c\n", *s);
                     exit(-1);
                     break;
                 }

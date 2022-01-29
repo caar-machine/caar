@@ -15,7 +15,7 @@ int get_file_size(FILE *fp)
     return size;
 }
 
-void as_assemble(char *input)
+void as_assemble(char *input, char *output)
 {
     FILE *fp = fopen(input, "r");
 
@@ -35,10 +35,14 @@ void as_assemble(char *input)
 
     Bytes bytes = codegen(ast);
 
+    FILE *output_f = fopen(output, "wb");
+
     for (int i = 0; i < bytes.length; i++)
     {
-        printf("%02X\n", bytes.data[i]);
+        fputc(bytes.data[i], output_f);
     }
+
+    fclose(output_f);
 
     vec_deinit(&bytes);
     vec_deinit(&ast);

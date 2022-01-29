@@ -88,12 +88,12 @@ static uint16_t fetch16(Cpu *cpu)
 
 #define CPU_REG_STUB(reg) \
     if (size)             \
-        *size = 1;        \
-    cpu->PC -= 1;         \
+        *size = 2;        \
     return cpu->reg;
 
 uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
 {
+
     uint32_t specifier = fetch(cpu);
 
     switch (specifier)
@@ -107,8 +107,9 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         if (sspec == 0x26)
         {
             uint8_t ret = fetch(cpu);
+
             if (size)
-                *size = 2;
+                *size = 3;
 
             return ret;
         }
@@ -119,7 +120,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         {
             uint8_t ret = fetch16(cpu);
             if (size)
-                *size = 3;
+                *size = 4;
 
             return ret;
         }
@@ -129,7 +130,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         {
             uint32_t ret = fetch32(cpu);
             if (size)
-                *size = 5;
+                *size = 6;
             return ret;
         }
 
@@ -192,6 +193,10 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
 
         return ret;
     }
+
+    default:
+        error("Unknown specifier: %x", specifier);
+        break;
     }
 
     return 0;

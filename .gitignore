@@ -1,3 +1,4 @@
 *.elf
 build
 *.o
+bios.bin

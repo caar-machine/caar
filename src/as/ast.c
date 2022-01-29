@@ -1,4 +1,5 @@
 #include <ast.h>
+#include <lib/log.h>
 
 AstNode parse_token(int *index, Tokens tokens)
 {
@@ -12,7 +13,7 @@ AstNode parse_token(int *index, Tokens tokens)
 
         if (*index + 1 > tokens.length || tokens.data[*index + 1].type != TOKEN_SYMBOL)
         {
-            fprintf(stderr, "ERROR: expected symbol in function call\n");
+            error("expected symbol in instruction");
             exit(-1);
         }
 
@@ -20,12 +21,14 @@ AstNode parse_token(int *index, Tokens tokens)
 
         if (*index + 1 > tokens.length)
         {
-            fprintf(stderr, "ERROR: expected character ')' in function call\n");
+            error("expected ')' at end of instruction");
             exit(-1);
         }
 
         while (tokens.data[++*index].type != TOKEN_RPAREN)
+        {
             vec_push(&node.call.params, parse_token(index, tokens).value);
+        }
 
         break;
     }
@@ -43,6 +46,14 @@ AstNode parse_token(int *index, Tokens tokens)
         node.type = AST_VALUE;
         node.value.type = AST_VAL_STR;
         node.value.str_ = tokens.data[*index]._string;
+        break;
+    }
+
+    case TOKEN_CHAR:
+    {
+        node.type = AST_VALUE;
+        node.value.type = AST_VAL_INT;
+        node.value.int_ = (int)tokens.data[*index]._char;
         break;
     }
 
@@ -65,12 +76,13 @@ AstNode parse_token(int *index, Tokens tokens)
     case TOKEN_RPAREN:
     case TOKEN_LBRACKET:
     case TOKEN_RBRACKET:
-        fprintf(stderr, "ERROR: unexpected token\n");
+        error("Unexpected token");
         exit(-1);
         break;
 
     default:
-        fprintf(stderr, "ERROR: Unexpected error\n");
+        error("this shouldn't happen. please open an issue at https://github.com/Abb1x/caar");
+
         exit(-1);
         break;
     }

@@ -27,13 +27,13 @@ void _log(LogLevel level, char *module, char *fmt, ...)
 
     case LOG_INFO:
     {
-        printf("\033[1;32minfo\033[0m ");
+        printf("\033[1;32minfo\033[0m  ");
         break;
     }
 
     case LOG_WARN:
     {
-        printf("\033[1;33mwarn\033[0m ");
+        printf("\033[1;33mwarn\033[0m  ");
         break;
     }
     }

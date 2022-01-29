@@ -1,17 +1,17 @@
+#include "ast.h"
 #include <codegen.h>
+#include <ctype.h>
+#include <lib/log.h>
 #include <lib/map.h>
 #include <stdbool.h>
-
-#define LITTLE_ENDIAN (*(uint16_t *)"\0\xff" < 0x100)
-#define CHECK_PARAM(params, idx, t) (idx < params.length && params.data[idx].type == t)
 
 char *str_to_lower(char *str)
 {
     char *ret = str;
+
     while (*str)
     {
-        if (*str >= 'A' && *str <= 'Z')
-            *str += 'a' - 'A';
+        *str = tolower(*str);
         str++;
     }
 
@@ -21,389 +21,142 @@ char *str_to_lower(char *str)
 typedef map_t(Byte) ByteMap;
 typedef map_t(uint32_t) LabelMap;
 
-Bytes _codegen(Ast ast, int *index, ByteMap opcodes, LabelMap *labels, bool toplevel, bool db)
+// Expressions are registers or immediate values.
+// TODO: add support for dereferences.
+void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
 {
-    Bytes ret = {};
+    switch (value.type)
+    {
+
+    case AST_VAL_INT:
+    {
+        uint32_t val = value.int_;
+
+        vec_push(bytes, 0x1A);
+        vec_push(bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
+
+        Byte *_bytes = (Byte *)&val;
+
+        // Get size of value
+        if (val > 0xFFFFFF)
+        {
+            // if four bytes, push 4 bytes
+            vec_push(bytes, _bytes[0]);
+            vec_push(bytes, _bytes[1]);
+            vec_push(bytes, _bytes[2]);
+            vec_push(bytes, _bytes[3]);
+        }
+        else if (val > 0xFFFF)
+        {
+            // three bytes
+            vec_push(bytes, _bytes[0]);
+            vec_push(bytes, _bytes[1]);
+            vec_push(bytes, _bytes[2]);
+        }
+        else if (val > 0xFF)
+        {
+            // 2 bytes
+            vec_push(bytes, _bytes[0]);
+            vec_push(bytes, _bytes[1]);
+        }
+        else
+        {
+            vec_push(bytes, _bytes[0]);
+        }
+        break;
+    }
+
+    case AST_VAL_SYMBOL:
+    {
+        uint32_t *addr = map_get(labels, value.symbol_);
+
+        if (!addr)
+        {
+            error("Unknown label: %s\n", value.symbol_);
+            exit(1);
+        }
+
+        vec_push(bytes, 0x1A);
+        vec_push(bytes, 0x29);
+
+        Byte *_bytes = (Byte *)addr;
+
+        vec_push(bytes, _bytes[0]);
+        vec_push(bytes, _bytes[1]);
+        vec_push(bytes, _bytes[2]);
+        vec_push(bytes, _bytes[3]);
+
+        break;
+    }
+
+    case AST_VAL_STR:
+    {
+
+        if (strlen(value.str_) > 4 && !defining)
+        {
+            error("String constant too big (4+ bytes)");
+        }
+
+        for (size_t i = 0; i < strlen(value.str_); i++)
+        {
+            vec_push(bytes, value.str_[i]);
+        }
+
+        break;
+    }
+
+    case AST_VAL_REG:
+    {
+        if (value.reg_ > REG_SP)
+        {
+            error("Invalid register.");
+            error("This is most likely an internal compiler bug or you messed up.");
+        }
+
+        vec_push(bytes, 0x1B + value.reg_);
+
+        break;
+    }
+    }
+}
+
+void codegen_call(AstCall call, LabelMap *labels, ByteMap opcodes, Bytes *bytes)
+{
+    Byte *opcode = map_get(&opcodes, call.name);
+
+    if (!opcode)
+    {
+        error("No such instruction: %s", call.name);
+    }
+
+    vec_push(bytes, *opcode);
+
+    for (int i = 0; i < call.params.length; i++)
+    {
+        codegen_expr(call.params.data[i], bytes, labels, false);
+    }
+}
+
+Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap labels)
+{
+    Bytes ret;
     vec_init(&ret);
 
-    for (; *index < ast.length; *index += 1)
+    for (int i = 0; i < ast.length; i++)
     {
-        switch (ast.data[*index].type)
+        switch (ast.data[i].type)
         {
+
         case AST_CALL:
-		{
-            if (!toplevel)
-            {
-                fprintf(stderr, "Function calls need to be at top level\n");
-                exit(1);
-            }
-
-            if (strcmp(ast.data[*index].call.name, "label") == 0)
-            {
-                if (!CHECK_PARAM(ast.data[*index].call.params, 0, AST_VAL_SYMBOL))
-                {
-                    fprintf(stderr, "label requires parameters (symbol)\n");
-                    exit(1);
-                }
-
-                map_set(labels, ast.data[*index].call.params.data[0].symbol_, ret.length + 0x1000);
-            }
-			if (strcmp(ast.data[*index].call.name, "db") == 0)
-            {
-                int idx;
-                Bytes bytes = _codegen(astvalues_to_ast(ast.data[*index].call.params), &idx, opcodes, labels, false, true);
-				Byte byte;
-                vec_foreach(&bytes, byte, idx)
-                {
-                    vec_push(&ret, byte);
-                }
-            }
-            else if (map_get(&opcodes, str_to_lower(ast.data[*index].call.name)))
-            {
-                Byte opcode = *map_get(&opcodes, str_to_lower(ast.data[*index].call.name));
-                AstValues params = ast.data[*index].call.params;
-
-                vec_push(&ret, opcode);
-                switch (opcode)
-                {
-                case 0x00: // CONS
-                {
-                    if (!CHECK_PARAM(params, 0, AST_VAL_REG))
-                    {
-                        fprintf(stderr, "%d %d\n", params.data[0].type, params.data[1].type);
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    if (params.length != 2)
-                    {
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    int idx;
-                    Byte byte;
-                    Ast params_ast = astvalues_to_ast(params);
-                    Bytes params_gen = _codegen(params_ast, index, opcodes, labels, false, false);
-                    vec_foreach(&params_gen, byte, idx)
-                    {
-                        vec_push(&ret, byte);
-                    }
-
-                    vec_deinit(&params_gen);
-                    vec_deinit(&params_ast);
-
-                    break;
-                }
-
-				case 0x01: // CAR
-                {
-                    if (!CHECK_PARAM(params, 0, AST_VAL_REG))
-                    {
-                        fprintf(stderr, "%d %d\n", params.data[0].type, params.data[1].type);
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    if (params.length != 2)
-                    {
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    int idx;
-                    Byte byte;
-                    Ast params_ast = astvalues_to_ast(params);
-                    Bytes params_gen = _codegen(params_ast, index, opcodes, labels, false, false);
-                    vec_foreach(&params_gen, byte, idx)
-                    {
-                        vec_push(&ret, byte);
-                    }
-
-                    vec_deinit(&params_gen);
-                    vec_deinit(&params_ast);
-
-                    break;
-                }
-
-				case 0x02: // CDR
-                {
-                    if (!CHECK_PARAM(params, 0, AST_VAL_REG))
-                    {
-                        fprintf(stderr, "%d %d\n", params.data[0].type, params.data[1].type);
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    if (params.length != 2)
-                    {
-                        fprintf(stderr, "cons requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    int idx;
-                    Byte byte;
-                    Ast params_ast = astvalues_to_ast(params);
-                    Bytes params_gen = _codegen(params_ast, index, opcodes, labels, false, false);
-                    vec_foreach(&params_gen, byte, idx)
-                    {
-                        vec_push(&ret, byte);
-                    }
-
-                    vec_deinit(&params_gen);
-                    vec_deinit(&params_ast);
-
-                    break;
-                }
-
-				case 0x03: // NOP
-					break;
-
-                case 0x04: // LDR
-                {
-                    if (!CHECK_PARAM(params, 0, AST_VAL_REG))
-                    {
-                        fprintf(stderr, "ldr requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    if (2 != params.length)
-                    {
-                        fprintf(stderr, "ldr requires parameters (reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    int idx;
-                    Byte byte;
-                    Ast params_ast = astvalues_to_ast(params);
-                    Bytes params_gen = _codegen(params_ast, index, opcodes, labels, false, false);
-                    vec_foreach(&params_gen, byte, idx)
-                    {
-                        vec_push(&ret, byte);
-                    }
-
-                    vec_deinit(&params_gen);
-                    vec_deinit(&params_ast);
-
-                    break;
-                }
-
-                case 0x05: // STR
-                {
-                    if (2 != params.length)
-                    {
-                        fprintf(stderr, "str requires parameters (val | reg, val | reg)\n");
-                        exit(1);
-                    }
-
-                    int idx;
-                    Byte byte;
-                    Ast params_ast = astvalues_to_ast(params);
-                    Bytes params_gen = _codegen(params_ast, index, opcodes, labels, false, false);
-                    vec_foreach(&params_gen, byte, idx)
-                    {
-                        vec_push(&ret, byte);
-                    }
-
-                    vec_deinit(&params_gen);
-                    vec_deinit(&params_ast);
-
-                    break;
-                }
-
-                default:
-                    fprintf(stderr, "Unimplemented opcode %s\n", ast.data[*index].call.name);
-                    exit(1);
-                };
-            }
-            else
-            {
-                printf("Unknown function: %s\n", ast.data[*index].call.name);
-                exit(1);
-            }
-
+        {
+            codegen_call(ast.data[i].call, &labels, opcodes, &ret);
             break;
-		}
+        }
 
         case AST_VALUE:
-            if (toplevel)
-            {
-                fprintf(stderr, "Values cannot be at top level\n");
-                exit(1);
-            }
-
-            switch (ast.data[*index].value.type)
-            {
-            case AST_VAL_INT:
-            {
-                uint32_t val = ast.data[*index].value.int_;
-
-                vec_push(&ret, 0x1A);
-                vec_push(
-                    &ret,
-                    (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
-
-                if (LITTLE_ENDIAN)
-                {
-                    Byte *bytes = (Byte *)&val;
-                    if (val > 0xFFFFFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[3]);
-                    }
-                    else if (val > 0xFFFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[2]);
-                    }
-                    else if (val > 0xFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                    }
-                    else
-                    {
-                        vec_push(&ret, bytes[0]);
-                    }
-                }
-                else
-                {
-                    Byte *bytes = (Byte *)&val;
-                    if (val > 0xFFFFFF)
-                    {
-                        vec_push(&ret, bytes[3]);
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else if (val > 0xFFFF)
-                    {
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else if (val > 0xFF)
-                    {
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else
-                    {
-                        vec_push(&ret, bytes[0]);
-                    }
-                }
-
-                break;
-            }
-
-            case AST_VAL_SYMBOL:
-            {
-                if (!map_get(labels, ast.data[*index].value.symbol_))
-                {
-                    fprintf(stderr, "Unknown label: %s\n", ast.data[*index].value.symbol_);
-                    exit(1);
-                }
-
-                uint32_t val = *map_get(labels, ast.data[*index].value.symbol_);
-
-                vec_push(&ret, 0x1A);
-                vec_push(
-                    &ret,
-                    (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
-
-                if (LITTLE_ENDIAN)
-                {
-                    Byte *bytes = (Byte *)&val;
-                    if (val > 0xFFFFFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[3]);
-                    }
-                    else if (val > 0xFFFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[2]);
-                    }
-                    else if (val > 0xFF)
-                    {
-                        vec_push(&ret, bytes[0]);
-                        vec_push(&ret, bytes[1]);
-                    }
-                    else
-                    {
-                        vec_push(&ret, bytes[0]);
-                    }
-                }
-                else
-                {
-                    Byte *bytes = (Byte *)&val;
-                    if (val > 0xFFFFFF)
-                    {
-                        vec_push(&ret, bytes[3]);
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else if (val > 0xFFFF)
-                    {
-                        vec_push(&ret, bytes[2]);
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else if (val > 0xFF)
-                    {
-                        vec_push(&ret, bytes[1]);
-                        vec_push(&ret, bytes[0]);
-                    }
-                    else
-                    {
-                        vec_push(&ret, bytes[0]);
-                    }
-                }
-
-                break;
-            }
-
-			case AST_VAL_STR:
-			{
-				if (!db)
-				{
-					fprintf(stderr, "ERROR: Strings can only be stored\n");
-					exit(1);
-				}
-				
-				for (size_t i = 0; i < strlen(ast.data[*index].value.str_); i++)
-				{
-					vec_push(&ret, ast.data[*index].value.str_[i]);
-				}
-				
-				break;
-			}
-
-            case AST_VAL_REG:
-            {
-                if (ast.data[*index].value.reg_ > REG_SP)
-                {
-                    fprintf(stderr, "ERROR: Unhandled error\n");
-                    exit(1);
-                }
-
-                vec_push(&ret, 0x1B + ast.data[*index].value.reg_);
-
-                break;
-            }
-
-            default:
-                fprintf(stderr, "ERROR: Unknown value type\n");
-                exit(1);
-            }
+        {
             break;
+        }
         }
     }
 
@@ -412,7 +165,6 @@ Bytes _codegen(Ast ast, int *index, ByteMap opcodes, LabelMap *labels, bool topl
 
 Bytes codegen(Ast ast)
 {
-    int i = 0;
     LabelMap labels;
     map_init(&labels);
 
@@ -445,5 +197,5 @@ Bytes codegen(Ast ast)
     map_set(&opcodes, "in", 0x17);
     map_set(&opcodes, "out", 0x18);
 
-    return _codegen(ast, &i, opcodes, &labels, true, false);
+    return codegen_impl(ast, opcodes, labels);
 }
