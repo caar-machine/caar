@@ -5,6 +5,35 @@
 #include <lib/map.h>
 #include <stdbool.h>
 
+#define OPCODES_MAP                  \
+    map_set(&opcodes, "cons", 0x00); \
+    map_set(&opcodes, "car", 0x01);  \
+    map_set(&opcodes, "cdr", 0x02);  \
+    map_set(&opcodes, "nop", 0x03);  \
+    map_set(&opcodes, "ldr", 0x04);  \
+    map_set(&opcodes, "str", 0x05);  \
+    map_set(&opcodes, "add", 0x06);  \
+    map_set(&opcodes, "sub", 0x07);  \
+    map_set(&opcodes, "div", 0x08);  \
+    map_set(&opcodes, "mul", 0x09);  \
+    map_set(&opcodes, "mod", 0x0A);  \
+    map_set(&opcodes, "not", 0x0B);  \
+    map_set(&opcodes, "and", 0x0C);  \
+    map_set(&opcodes, "or", 0x0D);   \
+    map_set(&opcodes, "xor", 0x0E);  \
+    map_set(&opcodes, "push", 0x0F); \
+    map_set(&opcodes, "pop", 0x10);  \
+    map_set(&opcodes, "jmp", 0x11);  \
+    map_set(&opcodes, "cmp", 0x12);  \
+    map_set(&opcodes, "je", 0x13);   \
+    map_set(&opcodes, "jne", 0x14);  \
+    map_set(&opcodes, "jlt", 0x15);  \
+    map_set(&opcodes, "jgt", 0x16);  \
+    map_set(&opcodes, "in", 0x17);   \
+    map_set(&opcodes, "out", 0x18);
+
+Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs);
+
 static uint32_t current_addr = 0;
 
 char *str_to_lower(char *str)
@@ -20,12 +49,9 @@ char *str_to_lower(char *str)
     return ret;
 }
 
-typedef map_t(Byte) ByteMap;
-typedef map_t(uint32_t) LabelMap;
-
 // Expressions are registers or immediate values.
 // TODO: add support for dereferences.
-void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
+void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *refs, bool defining)
 {
     switch (value.type)
     {
@@ -34,8 +60,11 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
     {
         uint32_t val = value.int_;
 
-        vec_push(bytes, 0x1A);
-        vec_push(bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
+        if (!defining)
+        {
+            vec_push(bytes, 0x1A);
+            vec_push(bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
+        }
 
         Byte *_bytes = (Byte *)&val;
 
@@ -70,22 +99,19 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
 
     case AST_VAL_SYMBOL:
     {
-        uint32_t *addr = map_get(labels, value.symbol_);
-
-        if (!addr)
-        {
-            error("Unknown label: %s\n", value.symbol_);
-            exit(1);
-        }
-
         vec_push(bytes, 0x1A);
         vec_push(bytes, 0x29);
 
-        Byte *_bytes = (Byte *)addr;
-        vec_push(bytes, _bytes[3]);
-        vec_push(bytes, _bytes[2]);
-        vec_push(bytes, _bytes[1]);
-        vec_push(bytes, _bytes[0]);
+        (void)labels;
+
+        LabelReference new_ref = {.name = strdup(value.symbol_), .byte_index = bytes->length};
+
+        vec_push(bytes, 0);
+        vec_push(bytes, 0);
+        vec_push(bytes, 0);
+        vec_push(bytes, 0);
+
+        vec_push(refs, new_ref);
 
         break;
     }
@@ -121,7 +147,7 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, bool defining)
     }
 }
 
-void codegen_call(AstCall call, LabelMap *labels, ByteMap opcodes, Bytes *bytes)
+void codegen_call(AstCall call, LabelMap *labels, LabelRefs *refs, ByteMap opcodes, Bytes *bytes)
 {
     Byte *opcode = map_get(&opcodes, call.name);
 
@@ -139,6 +165,16 @@ void codegen_call(AstCall call, LabelMap *labels, ByteMap opcodes, Bytes *bytes)
             return;
         }
 
+        else if (!strcmp(call.name, "db"))
+        {
+            for (int i = 0; i < call.params.length; i++)
+            {
+                codegen_expr(call.params.data[i], bytes, labels, refs, true);
+            }
+
+            return;
+        }
+
         else
         {
             error("No such instruction: %s", call.name);
@@ -149,11 +185,11 @@ void codegen_call(AstCall call, LabelMap *labels, ByteMap opcodes, Bytes *bytes)
 
     for (int i = 0; i < call.params.length; i++)
     {
-        codegen_expr(call.params.data[i], bytes, labels, false);
+        codegen_expr(call.params.data[i], bytes, labels, refs, false);
     }
 }
 
-Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap labels)
+Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs)
 {
     Bytes ret;
     vec_init(&ret);
@@ -167,7 +203,7 @@ Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap labels)
 
         case AST_CALL:
         {
-            codegen_call(ast.data[i].call, &labels, opcodes, &ret);
+            codegen_call(ast.data[i].call, labels, refs, opcodes, &ret);
             break;
         }
 
@@ -192,31 +228,32 @@ Bytes codegen(Ast ast)
     ByteMap opcodes;
     map_init(&opcodes);
 
-    map_set(&opcodes, "cons", 0x00);
-    map_set(&opcodes, "car", 0x01);
-    map_set(&opcodes, "cdr", 0x02);
-    map_set(&opcodes, "nop", 0x03);
-    map_set(&opcodes, "ldr", 0x04);
-    map_set(&opcodes, "str", 0x05);
-    map_set(&opcodes, "add", 0x06);
-    map_set(&opcodes, "sub", 0x07);
-    map_set(&opcodes, "div", 0x08);
-    map_set(&opcodes, "mul", 0x09);
-    map_set(&opcodes, "mod", 0x0A);
-    map_set(&opcodes, "not", 0x0B);
-    map_set(&opcodes, "and", 0x0C);
-    map_set(&opcodes, "or", 0x0D);
-    map_set(&opcodes, "xor", 0x0E);
-    map_set(&opcodes, "push", 0x0F);
-    map_set(&opcodes, "pop", 0x10);
-    map_set(&opcodes, "jmp", 0x11);
-    map_set(&opcodes, "cmp", 0x12);
-    map_set(&opcodes, "je", 0x13);
-    map_set(&opcodes, "jne", 0x14);
-    map_set(&opcodes, "jlt", 0x15);
-    map_set(&opcodes, "jgt", 0x16);
-    map_set(&opcodes, "in", 0x17);
-    map_set(&opcodes, "out", 0x18);
+    LabelRefs refs;
+    vec_init(&refs);
 
-    return codegen_impl(ast, opcodes, labels);
+    OPCODES_MAP;
+
+    Bytes ret = codegen_impl(ast, opcodes, &labels, &refs);
+
+    for (int i = 0; i < refs.length; i++)
+    {
+        LabelReference ref = refs.data[i];
+
+        uint32_t *addr = map_get(&labels, ref.name);
+
+        if (!addr)
+        {
+            error("Undefined symbol '%s' ", ref.name);
+            exit(-1);
+        }
+
+        Byte *byte = (Byte *)addr;
+
+        ret.data[ref.byte_index + 3] = byte[0];
+        ret.data[ref.byte_index + 2] = byte[1];
+        ret.data[ref.byte_index + 1] = byte[2];
+        ret.data[ref.byte_index] = byte[3];
+    }
+
+    return ret;
 }

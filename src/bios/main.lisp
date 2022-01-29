@@ -2,12 +2,36 @@
 ; Therefore, each label will be located at 0x1000+offset
 (org 4096)
 
-; Define new label called print_hello
+; This is the reset vector, the first instruction executed by the cpu at boot
+(jmp main)
+
+; Define some text
+(label some_text)
+    (db "hello world" 0)
+
+(label main)
+    ; put the address of the text into A
+    (push some_text) 
+    (pop #A)
+    ; Put A[0] into B
+    (ldr #B #A)
+    ; Print it
+    (jmp print_hello)
+
 (label print_hello)
-    (out 0 #\h)
-    (out 0 #\e)
-    (out 0 #\l)
-    (out 0 #\l)
-    (out 0 #\o)
-    (out 0 10) ; newline character
-    (jmp print_hello) ; loop by jumping back to the label
+    ; If A[i] is 0
+    (cmp #B 0)
+    ; return
+    (je end)
+    ; Else, write char to serial
+    (out 0 #B)
+    ; i++
+    (add #A 1)
+    ; B = A[i]
+    (ldr #B #A)
+    ; Continue
+    (jmp print_hello)
+    
+
+(label end)
+    (nop)

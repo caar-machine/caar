@@ -46,10 +46,10 @@ void push(uint32_t what, Cpu *cpu)
         uint8_t a[4];
         u32_to_u8(what, a);
 
-        ram_write(cpu->SP, a[0], cpu->ram);
-        ram_write(cpu->SP - 1, a[1], cpu->ram);
-        ram_write(cpu->SP - 2, a[2], cpu->ram);
-        ram_write(cpu->SP - 3, a[3], cpu->ram);
+        ram_write(cpu->SP - 1, a[0], cpu->ram);
+        ram_write(cpu->SP - 2, a[1], cpu->ram);
+        ram_write(cpu->SP - 3, a[2], cpu->ram);
+        ram_write(cpu->SP - 4, a[3], cpu->ram);
     }
 
     else
@@ -88,7 +88,7 @@ static uint16_t fetch16(Cpu *cpu)
 
 #define CPU_REG_STUB(reg) \
     if (size)             \
-        *size = 1;        \
+        *size = 0;        \
     return cpu->reg;
 
 uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
@@ -194,7 +194,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     }
 
     default:
-        error("Unknown specifier: %x", specifier);
+        error("Unknown specifier: %x at PC=%x", specifier, cpu->PC);
         break;
     }
 

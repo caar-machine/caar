@@ -75,6 +75,15 @@ Tokens lex(char *s)
             break;
         }
 
+        case ';':
+        {
+            s++;
+
+            while (*s != '\n')
+                s++;
+            break;
+        }
+
         default:
         {
             if (isalpha(*s))

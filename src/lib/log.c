@@ -4,9 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// HACK: lol
-extern char *strdup(const char *);
-
 void _log(LogLevel level, char *module, char *fmt, ...)
 {
     va_list ap;

@@ -14,5 +14,7 @@ void _log(LogLevel level, char *module, char *fmt, ...);
 #define error(msg, ...) _log(LOG_ERROR, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
 #define info(msg, ...) _log(LOG_INFO, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
 #define warn(msg, ...) _log(LOG_WARN, __FILENAME__, msg __VA_OPT__(, ) __VA_ARGS__)
+// HACK: lol
+extern char *strdup(const char *);
 
 #endif

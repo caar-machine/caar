@@ -119,6 +119,8 @@ void cpu_do_cycle(Cpu *cpu)
 
             bus_read(rhs, MEM_BYTE, &value, cpu->ram);
 
+            cpu->PC = start_pc;
+
             set_from_special_byte(value, cpu);
 
             cpu->PC = new_prev;
@@ -252,7 +254,6 @@ void cpu_do_cycle(Cpu *cpu)
 
             if (cpu->flags.EQ == 1)
                 cpu->PC = addr;
-            cpu->PC++;
 
             break;
         }
