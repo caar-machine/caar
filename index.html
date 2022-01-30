@@ -1,1 +1,38 @@
-hello
+<head>
+	<link rel="stylesheet" media="screen" href="style/main.css" type="text/css"/>
+	<style>
+		td { padding: 0 10px; vertical-align: top; }
+	</style>
+</head>
+
+<body>
+	<div class="container">
+
+	<h2>CAAR - The modern LISP machine</h2>
+
+	<p>CAAR is an attempt at writing a modern LISP machine from scratch. 
+	The architecture's small size and documentation allows for anyone to easily make an assembler or emulator. </p>
+
+	<h3>Philosophy</h3>
+	<p> The goal of this project is not to make a super fast architecture or have the most efficient design, 
+	but rather take small elements and build bigger ones by combining them. For example, 
+	the typical <code>mov</code> instruction is really just a macro for <code>push</code> and <code>pop</code> in the CAAR assembler.
+	</p>
+
+	<h3> Features </h3>
+	<ul>
+		<li> 32-bit memory addresses </li>
+		<li> Sexp-based assembler </li>
+		<li> MISC architecture (~25 instructions) </li>
+		<li> Hardware-based optimizations for cons cells operations such as <code>cons</code>, <code>car</code> and <code>cdr</code></li>
+	</ul>
+
+	<h3> Planned features </h3>
+	<ul>
+		<li> R5RS-compliant Scheme compiler </li>
+	</ul>
+
+	<h3> Code </h3>
+	<p> The source code and documentation are available on <a href="https://github.com/Abb1x/caar">the GitHub repository</a> </p>
+
+</body>
