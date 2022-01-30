@@ -176,6 +176,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
 
     case 0x23:
     {
+
         CPU_REG_STUB(PC);
     }
 
