@@ -1,2 +1,2 @@
-*.lisp linguist-language=commonlisp
-*.lisp diff=commonlisp
+*.lisp linguist-language=scheme
+*.lisp diff=scheme
