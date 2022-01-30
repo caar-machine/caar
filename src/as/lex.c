@@ -89,9 +89,12 @@ Tokens lex(char *s)
             if (isalpha(*s))
             {
                 curr.type = TOKEN_SYMBOL;
+
                 curr._symbol = str_while(&s, is_symbol);
+
                 vec_push(&ret, curr);
             }
+
             else if (isdigit(*s))
             {
 
@@ -191,6 +194,11 @@ Tokens lex(char *s)
                 }
 
                 vec_push(&ret, curr);
+            }
+
+            else
+            {
+                break;
             }
         }
         }

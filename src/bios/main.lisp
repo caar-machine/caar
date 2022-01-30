@@ -2,66 +2,10 @@
 ; Therefore, each label will be located at 0x1000+offset
 (org 0x1000)
 
-(defmacro call (label)
-  (push #PC)
-  (pop #C)
-  (add #C 0x10)
-  (jmp label))
-
-(defmacro ret ()
-  (pop #PC))
-
-; Define a macro that takes a parameter named param
-(defmacro display (param)
-  ; A = address of string
-  (push param)
-  (pop #A)
-
-  ; B = *A
-  (ldr #B #A)
-
-  ; We need to do this in order to return to the right place when popping PC
-  (push #PC)
-  (pop #C)
-
-  ; Adding to PC the number  of bytes the following instructions will take
-  (add #C 0x10) ; :meme:
-  (push #C)
-  
-  ; Actually printing the string
-  (jmp print_str))
-
 ; This is the reset vector, the first instruction executed by the cpu at boot
 (jmp main)
 
-; Define some raw bytes using db (define byte)
-; #\nl means newline
-; 0 means the end of the string
-(label boot_msg)
-    (db "===========================" #\nl)
-    (db "BootROM for CAAR" #\nl)
-    (db "===========================" #\nl)
-    (db "Welcome to CAAR!" #\nl)
-    (db "Firmware: caar-fw @ v0.0.1 by abbix" #\nl 0)
-
-(label cpu_str)
-	(db "    CPU: " 0)
-
-(label platform_str)
-	(db "Platform: " 0)
-
-(label vm_str)
-	(db "caar-vm (emulator)" #\nl 0)
-
-(label cpu1)
-	(db "caar1" #\nl 0)
-
-(label unknown)
-	(db "unknown, halting." #\nl 0)
-
-(label disk_msg)
-  (db "Searching for disks..." #\nl 0)
-
+(include "src/bios/print.lisp")
 
 (label main)
    ; Print text
@@ -98,21 +42,30 @@
   (label _halt)
     (jmp _halt)
 
- 
-(label print_str)
-    ; If A[i] is 0
-    (cmp #B 0)
-    ; return
-    (je end)
-    ; Else, write char to serial
-    (out 0 #B)
-    ; i++
-    (add #A 1)
-    ; B = A[i]
-    (ldr #B #A)
-    ; Continue
-    (jmp print_str)
-    
+; Define some raw bytes using db (define byte)
+; #\nl means newline
+; 0 means the end of the string
+(label boot_msg)
+    (db "===========================" #\nl)
+    (db "BootROM for CAAR" #\nl)
+    (db "===========================" #\nl)
+    (db "Welcome to CAAR!" #\nl)
+    (db "Firmware: caar-fw @ v0.0.1 by abbix" #\nl 0)
 
-(label end)
-	(ret)
+(label cpu_str)
+	(db "    CPU: " 0)
+
+(label platform_str)
+	(db "Platform: " 0)
+
+(label vm_str)
+	(db "caar-vm (emulator)" #\nl 0)
+
+(label cpu1)
+	(db "caar1" #\nl 0)
+
+(label unknown)
+	(db "unknown, halting." #\nl 0)
+
+(label disk_msg)
+  (db "Searching for disks..." #\nl 0)

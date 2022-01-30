@@ -1,7 +1,9 @@
 #include <ast.h>
 #include <lib/log.h>
 
-AstNode parse_token(int *index, Tokens tokens)
+int get_file_size(FILE *fp);
+
+AstNode parse_token(int *index, Ast *ast, Tokens tokens)
 {
     AstNode node = {0};
 
@@ -20,7 +22,37 @@ AstNode parse_token(int *index, Tokens tokens)
 
         node.call.name = tokens.data[++*index]._symbol;
 
-        if (!strcmp(node.call.name, "defmacro"))
+        if (!strcmp(node.call.name, "include"))
+        {
+            FILE *fp = fopen(tokens.data[ *index += 1]._string, "r");
+
+            if (!fp)
+            {
+                error("could not open file: %s", tokens.data[*index]._string);
+                exit(-1);
+            }
+
+            int size = get_file_size(fp);
+
+            char *text = calloc(size, 1);
+
+            fread(text, 1, size, fp);
+
+            fclose(fp);
+
+            Tokens new_tokens = lex(text);
+
+            for (int i = 0; i < new_tokens.length; i++)
+            {
+                vec_push(ast, parse_token(&i, ast, new_tokens));
+            }
+
+            *index += 1;
+
+            free(text);
+        }
+
+        else if (!strcmp(node.call.name, "defmacro"))
         {
             node.type = AST_MACRO;
             node.macro.name = tokens.data[ *index += 1]._symbol;
@@ -48,7 +80,7 @@ AstNode parse_token(int *index, Tokens tokens)
 
             while (tokens.data[++*index].type != TOKEN_RPAREN)
             {
-                vec_push(&ret, parse_token(index, tokens));
+                vec_push(&ret, parse_token(index, ast, tokens));
             }
 
             node.macro.body = ret;
@@ -64,7 +96,7 @@ AstNode parse_token(int *index, Tokens tokens)
 
             while (tokens.data[++*index].type != TOKEN_RPAREN)
             {
-                vec_push(&node.call.params, parse_token(index, tokens).value);
+                vec_push(&node.call.params, parse_token(index, ast, tokens).value);
             }
         }
 
@@ -114,7 +146,7 @@ AstNode parse_token(int *index, Tokens tokens)
     case TOKEN_RPAREN:
     case TOKEN_LBRACKET:
     case TOKEN_RBRACKET:
-        error("Unexpected token at position %d", *index);
+        error("Unexpected token of type %d at position %d", tokens.data[*index].type, *index);
         exit(-1);
         break;
 
@@ -135,7 +167,7 @@ Ast parse(Tokens tokens)
 
     for (int i = 0; i < tokens.length; i++)
     {
-        AstNode curr = parse_token(&i, tokens);
+        AstNode curr = parse_token(&i, &ast, tokens);
 
         vec_push(&ast, curr);
     }

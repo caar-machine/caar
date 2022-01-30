@@ -218,6 +218,11 @@ void codegen_call(AstCall call, Assembler *as, bool is_macro)
             return;
         }
 
+        else if (!strcmp(call.name, "include"))
+        {
+            return;
+        }
+
         else
         {
             error("No such instruction: %s", call.name);
