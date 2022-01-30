@@ -94,11 +94,20 @@ Tokens lex(char *s)
             }
             else if (isdigit(*s))
             {
+
                 curr.type = TOKEN_NUMBER;
+
+                bool is_hex = false;
+
+                if ((*s - '0') == 0 && *(s + 1) == 'x')
+                {
+                    is_hex = true;
+                    s += 2;
+                }
 
                 char *num = str_while(&s, is_digit);
 
-                sscanf(num, "%u", &curr._num);
+                sscanf(num, is_hex ? "%x" : "%u", &curr._num);
                 vec_push(&ret, curr);
             }
 
@@ -151,8 +160,18 @@ Tokens lex(char *s)
                 case '\\':
                 {
                     s++;
+
                     curr.type = TOKEN_CHAR;
                     curr._char = *s;
+
+                    if (tolower(*s) == 'n')
+                    {
+                        if (tolower(*(s + 1)) == 'l')
+                        {
+                            s++;
+                            curr._char = '\n';
+                        }
+                    }
 
                     break;
                 }
