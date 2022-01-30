@@ -35,16 +35,37 @@
     (db "Welcome to CAAR!" #\nl)
     (db "Firmware: caar-fw @ v0.0.1 by abbix" #\nl)
     (db "Platform: caar-vm" #\nl)
-    (db "    CPU: caar1" #\nl)
-    (db "Loading bootsector.." #\nl 0)
+    (db "    CPU: " 0)
+
+(label cpu1)
+	(db "caar1" #\nl 0)
+
+(label unknown)
+	(db "unknown" #\nl 0)
 
 (label disk_msg)
   (db "Searching for disks..." #\nl 0)
 
+(label print_cpu)
+	(display cpu1)
+	(jmp print_disk_msg)
+
+(label print_unknown)
+	(display unknown)
+	(jmp print_disk_msg)
+
 (label main)
    ; Print text
   (display boot_msg)
-  (display disk_msg)
+
+  (in #A 2) ; Cpuid
+  (cmp #A 1) ; if cpu == 1
+  (je print_cpu) ; print caar1
+  (jne print_unknown)
+
+  (label print_disk_msg)
+  	(display disk_msg)
+ 
   (label _halt)
     (jmp _halt)
 

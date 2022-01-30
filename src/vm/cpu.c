@@ -134,6 +134,8 @@ void cpu_do_cycle(Cpu *cpu)
 
             ram_write(lhs, rhs, cpu->ram);
 
+            cpu->PC = start_pc;
+
             set_from_special_byte(0, cpu);
 
             cpu->PC = new_prev;
@@ -289,7 +291,16 @@ void cpu_do_cycle(Cpu *cpu)
 
         case 0x17: // IN
         {
-            error("TODO: in");
+            CPU_GET_LHS_AND_RHS();
+
+            (void)lhs;
+
+            cpu->PC = start_pc;
+
+            set_from_special_byte(io_read(rhs), cpu);
+
+            cpu->PC = new_prev;
+
             break;
         }
 
