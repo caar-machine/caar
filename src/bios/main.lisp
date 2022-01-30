@@ -6,12 +6,18 @@
 (jmp main)
 
 (include "src/bios/print.lisp")
+(include "src/bios/macros.lisp")
+
+(label print_unknown)
+  (display unknown)
+  (loop)
 
 (label main)
    ; Print text
   (display boot_msg)
 
   (display platform_str) ; print "Platform: "
+
   (in #A 3) ; Read the platform from io port 3
   (cmp #A 1) ; If platform is 1, then we're in an emulator, else, we're in a real machine
 
@@ -33,15 +39,10 @@
 
   (in #A 1) ; Read bus address
 
-  (jmp _halt)
+  (loop) ; loop forever
 
-  (label print_unknown)
-	(display unknown)
-	(jmp _halt)
 
-  (label _halt)
-    (jmp _halt)
-
+; Data -----------------------------------------------------------------------
 ; Define some raw bytes using db (define byte)
 ; #\nl means newline
 ; 0 means the end of the string

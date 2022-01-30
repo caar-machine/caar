@@ -7,5 +7,6 @@
 (defmacro ret ()
   (pop #PC))
 
-
-
+(defmacro loop ()
+  (label _halt)
+  (jmp _halt))
