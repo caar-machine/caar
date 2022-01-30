@@ -2,10 +2,6 @@
 ; Therefore, each label will be located at 0x1000+offset
 (org 0x1000)
 
-(defmacro halt ()
-  (label _halt)
-  (jmp _halt))
-
 ; Define a macro that takes a parameter named param
 (defmacro display (param)
   ; A = address of string
@@ -49,7 +45,8 @@
    ; Print text
   (display boot_msg)
   (display disk_msg)
-  (halt)
+  (label _halt)
+    (jmp _halt)
 
  
 (label print_str)
