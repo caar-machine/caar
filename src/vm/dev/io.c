@@ -8,7 +8,10 @@ uint8_t io_read(int port)
     case 1:
         warn("TODO: bus");
         break;
+
     case 2: // Cpu ID, 1 is caar1
+        return 1;
+    case 3: // running in VM
         return 1;
 
     default:
