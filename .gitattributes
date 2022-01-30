@@ -1,0 +1,2 @@
+*.lisp linguist-language=common-lisp
+*.lisp diff=common-lisp
