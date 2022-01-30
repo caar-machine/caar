@@ -1,16 +1,16 @@
 (label print_str)
-    ; If A[i] is 0
-    (cmp #B 0)
-    ; return
-    (je end)
-    ; Else, write char to serial
-    (out 0 #B)
-    ; i++
-    (add #A 1)
-    ; B = A[i]
-    (ldr #B #A)
-    ; Continue
-    (jmp print_str)
+  ; If A[i] is 0
+  (cmp #B 0)
+  ; return
+  (je end)
+  ; Else, write char to serial
+  (out 0 #B)
+  ; i++
+  (add #A 1)
+  ; B = A[i]
+  (ldr #B #A)
+  ; Continue
+  (jmp print_str)
 
 (label end)
 	(pop #PC)
