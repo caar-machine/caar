@@ -19,4 +19,29 @@ typedef struct
 typedef vec_t(LabelReference) LabelRefs;
 
 Bytes codegen(Ast ast);
+
+typedef map_t(AstValue) MacroSymbols;
+
+typedef struct
+{
+    AstMacro *ast_macro;
+    Bytes bytes;
+    MacroSymbols symbols;
+} Macro;
+
+typedef map_t(Macro) MacroMap;
+typedef struct
+{
+    Bytes bytes;
+    LabelMap labels;
+    ByteMap opcodes;
+    MacroMap macros;
+    LabelRefs refs;
+    Ast ast;
+    uint32_t current_addr, prev_len;
+    Ast macro_ast;
+    Bytes original_bytes;
+    Macro *current_macro;
+} Assembler;
+
 #endif

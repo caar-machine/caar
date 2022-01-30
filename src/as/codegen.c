@@ -5,36 +5,32 @@
 #include <lib/map.h>
 #include <stdbool.h>
 
-#define OPCODES_MAP                  \
-    map_set(&opcodes, "cons", 0x00); \
-    map_set(&opcodes, "car", 0x01);  \
-    map_set(&opcodes, "cdr", 0x02);  \
-    map_set(&opcodes, "nop", 0x03);  \
-    map_set(&opcodes, "ldr", 0x04);  \
-    map_set(&opcodes, "str", 0x05);  \
-    map_set(&opcodes, "add", 0x06);  \
-    map_set(&opcodes, "sub", 0x07);  \
-    map_set(&opcodes, "div", 0x08);  \
-    map_set(&opcodes, "mul", 0x09);  \
-    map_set(&opcodes, "mod", 0x0A);  \
-    map_set(&opcodes, "not", 0x0B);  \
-    map_set(&opcodes, "and", 0x0C);  \
-    map_set(&opcodes, "or", 0x0D);   \
-    map_set(&opcodes, "xor", 0x0E);  \
-    map_set(&opcodes, "push", 0x0F); \
-    map_set(&opcodes, "pop", 0x10);  \
-    map_set(&opcodes, "jmp", 0x11);  \
-    map_set(&opcodes, "cmp", 0x12);  \
-    map_set(&opcodes, "je", 0x13);   \
-    map_set(&opcodes, "jne", 0x14);  \
-    map_set(&opcodes, "jlt", 0x15);  \
-    map_set(&opcodes, "jgt", 0x16);  \
-    map_set(&opcodes, "in", 0x17);   \
-    map_set(&opcodes, "out", 0x18);
-
-Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs);
-
-static uint32_t current_addr = 0;
+#define OPCODES_MAP(what)        \
+    map_set(what, "cons", 0x00); \
+    map_set(what, "car", 0x01);  \
+    map_set(what, "cdr", 0x02);  \
+    map_set(what, "nop", 0x03);  \
+    map_set(what, "ldr", 0x04);  \
+    map_set(what, "str", 0x05);  \
+    map_set(what, "add", 0x06);  \
+    map_set(what, "sub", 0x07);  \
+    map_set(what, "div", 0x08);  \
+    map_set(what, "mul", 0x09);  \
+    map_set(what, "mod", 0x0A);  \
+    map_set(what, "not", 0x0B);  \
+    map_set(what, "and", 0x0C);  \
+    map_set(what, "or", 0x0D);   \
+    map_set(what, "xor", 0x0E);  \
+    map_set(what, "push", 0x0F); \
+    map_set(what, "pop", 0x10);  \
+    map_set(what, "jmp", 0x11);  \
+    map_set(what, "cmp", 0x12);  \
+    map_set(what, "je", 0x13);   \
+    map_set(what, "jne", 0x14);  \
+    map_set(what, "jlt", 0x15);  \
+    map_set(what, "jgt", 0x16);  \
+    map_set(what, "in", 0x17);   \
+    map_set(what, "out", 0x18);
 
 char *str_to_lower(char *str)
 {
@@ -51,7 +47,7 @@ char *str_to_lower(char *str)
 
 // Expressions are registers or immediate values.
 // TODO: add support for dereferences.
-void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *refs, bool defining)
+void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
 {
     switch (value.type)
     {
@@ -62,8 +58,8 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *ref
 
         if (!defining)
         {
-            vec_push(bytes, 0x1A);
-            vec_push(bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
+            vec_push(&as->bytes, 0x1A);
+            vec_push(&as->bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
         }
 
         Byte *_bytes = (Byte *)&val;
@@ -72,46 +68,56 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *ref
         if (val > 0xFFFFFF)
         {
             // if four bytes, push 4 bytes
-            vec_push(bytes, _bytes[0]);
-            vec_push(bytes, _bytes[1]);
-            vec_push(bytes, _bytes[2]);
-            vec_push(bytes, _bytes[3]);
+            vec_push(&as->bytes, _bytes[0]);
+            vec_push(&as->bytes, _bytes[1]);
+            vec_push(&as->bytes, _bytes[2]);
+            vec_push(&as->bytes, _bytes[3]);
         }
         else if (val > 0xFFFF)
         {
             // three bytes
-            vec_push(bytes, _bytes[0]);
-            vec_push(bytes, _bytes[1]);
-            vec_push(bytes, _bytes[2]);
+            vec_push(&as->bytes, _bytes[0]);
+            vec_push(&as->bytes, _bytes[1]);
+            vec_push(&as->bytes, _bytes[2]);
         }
         else if (val > 0xFF)
         {
             // 2 bytes
-            vec_push(bytes, _bytes[1]);
-            vec_push(bytes, _bytes[0]);
+            vec_push(&as->bytes, _bytes[1]);
+            vec_push(&as->bytes, _bytes[0]);
         }
         else
         {
-            vec_push(bytes, _bytes[0]);
+            vec_push(&as->bytes, _bytes[0]);
         }
         break;
     }
 
     case AST_VAL_SYMBOL:
     {
-        vec_push(bytes, 0x1A);
-        vec_push(bytes, 0x29);
+        vec_push(&as->bytes, 0x1A);
+        vec_push(&as->bytes, 0x29);
 
-        (void)labels;
+        char *what = value.symbol_;
 
-        LabelReference new_ref = {.name = strdup(value.symbol_), .byte_index = bytes->length};
+        if (is_macro)
+        {
+            AstValue *val = map_get(&as->current_macro->symbols, value.symbol_);
 
-        vec_push(bytes, 0);
-        vec_push(bytes, 0);
-        vec_push(bytes, 0);
-        vec_push(bytes, 0);
+            if (val)
+            {
+                what = val->symbol_;
+            }
+        }
 
-        vec_push(refs, new_ref);
+        LabelReference new_ref = {.name = strdup(what), .byte_index = is_macro ? as->original_bytes.length + as->bytes.length : as->bytes.length};
+
+        vec_push(&as->bytes, 0);
+        vec_push(&as->bytes, 0);
+        vec_push(&as->bytes, 0);
+        vec_push(&as->bytes, 0);
+
+        vec_push(&as->refs, new_ref);
 
         break;
     }
@@ -126,7 +132,7 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *ref
 
         for (size_t i = 0; i < strlen(value.str_); i++)
         {
-            vec_push(bytes, value.str_[i]);
+            vec_push(&as->bytes, value.str_[i]);
         }
 
         break;
@@ -137,31 +143,68 @@ void codegen_expr(AstValue value, Bytes *bytes, LabelMap *labels, LabelRefs *ref
         if (value.reg_ > REG_SP)
         {
             error("Invalid register.");
-            error("This is most likely an internal compiler bug or you messed up.");
         }
 
-        vec_push(bytes, 0x1B + value.reg_);
+        vec_push(&as->bytes, 0x1B + value.reg_);
 
         break;
     }
     }
 }
 
-void codegen_call(AstCall call, LabelMap *labels, LabelRefs *refs, ByteMap opcodes, Bytes *bytes)
+void codegen_impl(Assembler *as, bool is_macro);
+
+void codegen_macro(Macro *macro, Assembler *as)
 {
-    Byte *opcode = map_get(&opcodes, call.name);
+    as->macro_ast = macro->ast_macro->body;
+
+    codegen_impl(as, true);
+
+    for (int i = 0; i < macro->bytes.length; i++)
+    {
+        vec_push(&as->bytes, macro->bytes.data[i]);
+    }
+}
+
+void codegen_call(AstCall call, Assembler *as, bool is_macro)
+{
+    if (is_macro)
+    {
+        AstValue *val = map_get(&as->current_macro->symbols, call.name);
+
+        if (val)
+            call.name = val->symbol_;
+    }
+
+    Byte *opcode = map_get(&as->opcodes, call.name);
 
     if (!opcode)
     {
+        Macro *macro = map_get(&as->macros, call.name);
+
+        if (macro)
+        {
+            as->current_macro = macro;
+
+            for (int i = 0; i < macro->ast_macro->params.length; i++)
+            {
+                map_set(&macro->symbols, macro->ast_macro->params.data[0], call.params.data[0]);
+            }
+
+            codegen_macro(macro, as);
+
+            return;
+        }
+
         if (!strcmp(call.name, "org"))
         {
-            current_addr = call.params.data[0].int_;
+            as->current_addr = call.params.data[0].int_;
             return;
         }
 
         else if (!strcmp(call.name, "label"))
         {
-            map_set(labels, call.params.data->str_, current_addr);
+            map_set(&as->labels, call.params.data->str_, as->current_addr);
             return;
         }
 
@@ -169,7 +212,7 @@ void codegen_call(AstCall call, LabelMap *labels, LabelRefs *refs, ByteMap opcod
         {
             for (int i = 0; i < call.params.length; i++)
             {
-                codegen_expr(call.params.data[i], bytes, labels, refs, true);
+                codegen_expr(call.params.data[i], as, true, is_macro);
             }
 
             return;
@@ -181,20 +224,17 @@ void codegen_call(AstCall call, LabelMap *labels, LabelRefs *refs, ByteMap opcod
         }
     }
 
-    vec_push(bytes, *opcode);
+    vec_push(&as->bytes, *opcode);
 
     for (int i = 0; i < call.params.length; i++)
     {
-        codegen_expr(call.params.data[i], bytes, labels, refs, false);
+        codegen_expr(call.params.data[i], as, false, is_macro);
     }
 }
 
-Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs)
+void codegen_impl(Assembler *as, bool is_macro)
 {
-    Bytes ret;
-    vec_init(&ret);
-
-    size_t prev_len = 0;
+    Ast ast = is_macro ? as->macro_ast : as->ast;
 
     for (int i = 0; i < ast.length; i++)
     {
@@ -203,7 +243,7 @@ Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs)
 
         case AST_CALL:
         {
-            codegen_call(ast.data[i].call, labels, refs, opcodes, &ret);
+            codegen_call(ast.data[i].call, as, is_macro);
             break;
         }
 
@@ -211,35 +251,48 @@ Bytes codegen_impl(Ast ast, ByteMap opcodes, LabelMap *labels, LabelRefs *refs)
         {
             break;
         }
+
+        case AST_MACRO:
+        {
+            Macro macro = {0};
+            macro.ast_macro = &ast.data[i].macro;
+
+            vec_init(&macro.bytes);
+
+            map_set(&as->macros, ast.data[i].macro.name, macro);
+
+            break;
         }
 
-        current_addr += (ret.length - prev_len);
-        prev_len = ret.length;
-    }
+        default:
+            break;
+        }
 
-    return ret;
+        as->current_addr += (as->bytes.length - as->prev_len);
+        as->prev_len = as->bytes.length;
+    }
 }
 
 Bytes codegen(Ast ast)
 {
-    LabelMap labels;
-    map_init(&labels);
+    Assembler as = {0};
 
-    ByteMap opcodes;
-    map_init(&opcodes);
+    as.ast = ast;
 
-    LabelRefs refs;
-    vec_init(&refs);
+    map_init(&as.labels);
+    map_init(&as.opcodes);
+    vec_init(&as.refs);
+    vec_init(&as.bytes);
 
-    OPCODES_MAP;
+    OPCODES_MAP(&as.opcodes);
 
-    Bytes ret = codegen_impl(ast, opcodes, &labels, &refs);
+    codegen_impl(&as, false);
 
-    for (int i = 0; i < refs.length; i++)
+    for (int i = 0; i < as.refs.length; i++)
     {
-        LabelReference ref = refs.data[i];
+        LabelReference ref = as.refs.data[i];
 
-        uint32_t *addr = map_get(&labels, ref.name);
+        uint32_t *addr = map_get(&as.labels, ref.name);
 
         if (!addr)
         {
@@ -249,11 +302,11 @@ Bytes codegen(Ast ast)
 
         Byte *byte = (Byte *)addr;
 
-        ret.data[ref.byte_index + 3] = byte[0];
-        ret.data[ref.byte_index + 2] = byte[1];
-        ret.data[ref.byte_index + 1] = byte[2];
-        ret.data[ref.byte_index] = byte[3];
+        as.bytes.data[ref.byte_index + 3] = byte[0];
+        as.bytes.data[ref.byte_index + 2] = byte[1];
+        as.bytes.data[ref.byte_index + 1] = byte[2];
+        as.bytes.data[ref.byte_index] = byte[3];
     }
 
-    return ret;
+    return as.bytes;
 }

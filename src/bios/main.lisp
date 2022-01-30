@@ -2,23 +2,24 @@
 ; Therefore, each label will be located at 0x1000+offset
 (org 4096)
 
+(defmacro display (param)
+  (push param)
+  (pop #A)
+  (ldr #B #A)
+  (jmp print_str))
+
 ; This is the reset vector, the first instruction executed by the cpu at boot
 (jmp main)
 
 ; Define some text
-(label some_text)
+(label boot_msg)
     (db "hello world" 0)
 
 (label main)
-    ; put the address of the text into A
-    (push some_text) 
-    (pop #A)
-    ; Put A[0] into B
-    (ldr #B #A)
-    ; Print it
-    (jmp print_hello)
-
-(label print_hello)
+   ; Print hello
+   (display boot_msg)
+ 
+(label print_str)
     ; If A[i] is 0
     (cmp #B 0)
     ; return
@@ -30,7 +31,7 @@
     ; B = A[i]
     (ldr #B #A)
     ; Continue
-    (jmp print_hello)
+    (jmp print_str)
     
 
 (label end)

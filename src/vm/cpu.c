@@ -306,6 +306,7 @@ void cpu_do_cycle(Cpu *cpu)
         default:
         {
             warn("invalid opcode: %x at PC=%x", opcode, cpu->PC);
+            exit(-1);
             break;
         }
         }

@@ -7,6 +7,7 @@ AstNode parse_token(int *index, Tokens tokens)
 
     switch (tokens.data[*index].type)
     {
+
     case TOKEN_LPAREN:
     {
         node.type = AST_CALL;
@@ -19,15 +20,52 @@ AstNode parse_token(int *index, Tokens tokens)
 
         node.call.name = tokens.data[++*index]._symbol;
 
-        if (*index + 1 > tokens.length)
+        if (!strcmp(node.call.name, "defmacro"))
         {
-            error("expected ')' at end of instruction");
-            exit(-1);
+            node.type = AST_MACRO;
+            node.macro.name = tokens.data[ *index += 1]._symbol;
+
+            *index += 2;
+
+            Token tok = tokens.data[*index];
+
+            while (tok.type != TOKEN_RPAREN)
+            {
+                tok = tokens.data[*index];
+
+                if (tok.type != TOKEN_RPAREN)
+                {
+                    vec_push(&node.macro.params, tok._symbol);
+                }
+
+                else
+                    continue;
+
+                *index += 1;
+            }
+
+            Ast ret = {0};
+
+            while (tokens.data[++*index].type != TOKEN_RPAREN)
+            {
+                vec_push(&ret, parse_token(index, tokens));
+            }
+
+            node.macro.body = ret;
         }
 
-        while (tokens.data[++*index].type != TOKEN_RPAREN)
+        else
         {
-            vec_push(&node.call.params, parse_token(index, tokens).value);
+            if (*index + 1 > tokens.length)
+            {
+                error("expected ')' at end of instruction");
+                exit(-1);
+            }
+
+            while (tokens.data[++*index].type != TOKEN_RPAREN)
+            {
+                vec_push(&node.call.params, parse_token(index, tokens).value);
+            }
         }
 
         break;
@@ -76,7 +114,7 @@ AstNode parse_token(int *index, Tokens tokens)
     case TOKEN_RPAREN:
     case TOKEN_LBRACKET:
     case TOKEN_RBRACKET:
-        error("Unexpected token");
+        error("Unexpected token at position %d", *index);
         exit(-1);
         break;
 

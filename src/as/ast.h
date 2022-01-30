@@ -1,11 +1,13 @@
 #ifndef AS_AST_H
 #define AS_AST_H
 #include <lex.h>
+#include <lib/map.h>
 
 typedef enum
 {
     AST_CALL,
     AST_VALUE,
+    AST_MACRO,
 } AstNodeType;
 
 typedef struct
@@ -36,7 +38,18 @@ typedef struct
     AstValues params;
 } AstCall;
 
+typedef struct AstNode AstNode;
+
+typedef vec_t(AstNode) Ast;
+
 typedef struct
+{
+    char *name;
+    vec_str_t params;
+    Ast body;
+} AstMacro;
+
+typedef struct AstNode
 {
     AstNodeType type;
 
@@ -44,11 +57,10 @@ typedef struct
     {
         AstCall call;
         AstValue value;
+        AstMacro macro;
     };
 
 } AstNode;
-
-typedef vec_t(AstNode) Ast;
 
 Ast parse(Tokens tokens);
 Ast astvalues_to_ast(AstValues value);

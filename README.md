@@ -15,8 +15,9 @@ The goal of this project is to be able to run a somewhat functional operating sy
 - [x] Tokenizer
 - [x] Parser
 - [x] Codegen
-- [ ] preprocessor
+- [x] preprocessor
 - [ ] Semantic checks
+- [ ] Better preprocessor (nested macros)
 
 ### R5RS compiler
 - [ ] everything
