@@ -189,7 +189,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     {
         uint32_t ret = 0;
 
-        bus_read(fetch32(cpu), MEM_4_BYTES, &ret, cpu->ram);
+        bus_read(fetch32(cpu), MEM_4_BYTES, &ret, cpu->ram, cpu->bus);
 
         return ret;
     }

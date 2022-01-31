@@ -5,11 +5,19 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct
+typedef enum
 {
-    void (*write)(void *data);
+    BUS_DEV_EMPTY,
+    BUS_DEV_DISK,
+    BUS_DEV_GPU,
+} DeviceType;
+
+typedef struct __attribute__((packed))
+{
+    void (*write)(void *data, Ram *ram);
     uint32_t (*read)();
-    int type;
+    DeviceType type;
+
 } BusDevice;
 
 typedef struct
@@ -18,9 +26,25 @@ typedef struct
     size_t device_count;
 } Bus;
 
+typedef struct __attribute__((packed))
+{
+    uint32_t type;
+    uint32_t addr;
+} RawBusDevice;
+
+typedef struct __attribute__((packed))
+{
+    uint32_t device_count;
+    RawBusDevice devices[32];
+} RawBus;
+
 void bus_init(Bus *bus);
 void bus_attach(BusDevice dev, Bus *bus);
 
-void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram);
+void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus);
+
+RawBus *bus_to_raw_bus(Bus bus);
+
+uint32_t bus_get_addr();
 
 #endif

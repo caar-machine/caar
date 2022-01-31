@@ -1,6 +1,7 @@
 #ifndef CAAR_CPU_H
 #define CAAR_CPU_H
 
+#include <dev/bus.h>
 #include <ram.h>
 #include <stddef.h>
 
@@ -17,6 +18,7 @@ typedef struct
     } flags;
 
     Ram *ram;
+    Bus *bus;
     size_t rom_size;
 } Cpu;
 
@@ -26,7 +28,7 @@ typedef struct __attribute__((packed))
     uint32_t cdr;
 } Cons;
 
-void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size);
+void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size);
 void cpu_do_cycle(Cpu *cpu);
 
 #endif

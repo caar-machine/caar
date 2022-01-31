@@ -1,13 +1,13 @@
+#include "dev/bus.h"
 #include <dev/io.h>
 #include <stdio.h>
 
-uint8_t io_read(int port)
+uint32_t io_read(int port)
 {
     switch (port)
     {
     case 1:
-        warn("TODO: bus");
-        break;
+        return bus_get_addr();
 
     case 2: // Cpu ID, 1 is caar1
         return 1;

@@ -26,11 +26,11 @@
 
   ; We need to do this in order to return to the right place when popping PC
   (push #PC)
-  (pop #C)
+  (pop #G)
 
   ; Adding to PC the number  of bytes the following instructions will take
-  (add #C 0x10) ; :meme:
-  (push #C)
+  (add #G 0x10) ; :meme:
+  (push #G)
   
   ; Actually printing the string
   (jmp print_str))

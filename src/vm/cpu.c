@@ -13,9 +13,8 @@
     (void)start_pc;                                             \
     uint32_t inst_size = 0;                                     \
     uint32_t op_a = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t prev_pc = cpu->PC += inst_size;                    \
     uint32_t op_b = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t new_prev = prev_pc + inst_size;                    \
+    uint32_t new_prev = cpu->PC;                                \
     cpu->PC = start_pc;                                         \
     set_from_special_byte(op_a OP op_b, cpu);                   \
     cpu->PC = new_prev;
@@ -55,9 +54,10 @@
     (void)prev_pc;                                             \
     (void)new_prev;
 
-void cpu_init(Ram *ram, Cpu *cpu, size_t rom_size)
+void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
 {
     cpu->ram = ram;
+    cpu->bus = bus;
     cpu->SP = MEMORY_SIZE;
     cpu->PC = 0x1000;
     cpu->rom_size = rom_size;
@@ -117,7 +117,7 @@ void cpu_do_cycle(Cpu *cpu)
 
             uint32_t value = 0;
 
-            bus_read(rhs, MEM_BYTE, &value, cpu->ram);
+            bus_read(rhs, MEM_BYTE, &value, cpu->ram, cpu->bus);
 
             cpu->PC = start_pc;
 

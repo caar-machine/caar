@@ -1,4 +1,6 @@
+#include "ram.h"
 #include <dev/bus.h>
+#include <stdlib.h>
 
 #define ALIGN_DOWN(NUM, WHAT) ((NUM) & ~(WHAT - 1))
 
@@ -12,9 +14,37 @@ void bus_attach(BusDevice dev, Bus *bus)
     bus->devices[bus->device_count++] = dev;
 }
 
-void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)
+RawBus *raw_bus = NULL;
+
+RawBus *bus_to_raw_bus(Bus bus)
 {
-    if (addr >= MEMORY_SIZE + 0x1000 && addr < MEMORY_SIZE + 0x2000)
+    if (!raw_bus)
+    {
+        raw_bus = malloc(sizeof(RawBus));
+
+        raw_bus->device_count = bus.device_count;
+
+        for (size_t i = 0; i < bus.device_count; i++)
+        {
+            raw_bus->devices[i].type = bus.devices[i].type;
+            raw_bus->devices[i].addr = i + MEMORY_SIZE + 0x1000;
+        }
+    }
+
+    return raw_bus;
+}
+
+void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
+{
+
+    if (addr >= MEMORY_SIZE + 1 && addr < MEMORY_SIZE + 0x1000)
+    {
+        RawBus *raw = bus_to_raw_bus(*bus);
+
+        *value = *(uint32_t *)((uint64_t)raw + (addr - (MEMORY_SIZE + 1)));
+    }
+
+    else if (addr >= MEMORY_SIZE + 0x1000 && addr < MEMORY_SIZE + 0x2000)
     {
         size_t index = addr - MEMORY_SIZE - 0x1000;
 
@@ -28,7 +58,7 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)
             index = ALIGN_DOWN(index, 128) / 128;
         }
 
-        info("reading device at index %d", index);
+        bus->devices[index].read();
     }
 
     else
@@ -37,4 +67,9 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)
     }
 
     return;
+}
+
+uint32_t bus_get_addr()
+{
+    return MEMORY_SIZE + 1;
 }

@@ -4,6 +4,6 @@
 #include <stdint.h>
 
 void io_write(int port, uint8_t data);
-uint8_t io_read(int port);
+uint32_t io_read(int port);
 
 #endif

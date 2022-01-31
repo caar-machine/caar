@@ -1,4 +1,5 @@
 #include <cpu.h>
+#include <dev/disk.h>
 #include <errno.h>
 #include <lib/log.h>
 #include <stdint.h>
@@ -68,6 +69,8 @@ int main(int argc, char **argv)
 
     Ram ram = {0};
     Cpu cpu = {0};
+    Bus bus = {0};
+
     char *file = NULL;
 
     while (argc > 0)
@@ -109,10 +112,13 @@ int main(int argc, char **argv)
     }
 
     ram_init(&ram);
+    bus_init(&bus);
 
     int size = load_file(file, &ram);
 
-    cpu_init(&ram, &cpu, size);
+    disk_init(&bus);
+
+    cpu_init(&ram, &bus, &cpu, size);
 
     while (1)
     {

@@ -1,7 +1,8 @@
 (defmacro call (label)
   (push #PC)
-  (pop #C)
-  (add #C 0x10)
+  (pop #G)
+  (add #G 0x10)
+  (push #G)
   (jmp label))
 
 (defmacro ret ()
