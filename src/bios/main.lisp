@@ -24,8 +24,13 @@
   (db 0) ; Read
   (db 1) ; One sector
   (db 0x8000) ; where to put the data
+  (db 0) ; padding because the address needs to be 4 bytes
   (db 0) ; padding
-  (db 0) ; padding
+
+(label addr)
+  (db 0x8000)
+  (db 0)
+  (db 0)
 
 (label main)
   (display boot_msg) ; Print welcome message
@@ -66,6 +71,11 @@
   (ldw #D #B) ; Load it into D
   (stw #D disk_command)  ; Write to disk address
 
+  (display bootsector_loaded)
+
+  (ldw #D addr) ; Lmao
+
+  (jmp #D)
 
   (loop) ; loop forever
 
@@ -124,3 +134,6 @@
 
 (label disk_found)
   (db "disk found!" #\nl 0)
+
+(label bootsector_loaded)
+  (db "bootsector loaded.. jumping to code" #\nl 0)

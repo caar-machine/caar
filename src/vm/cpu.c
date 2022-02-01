@@ -67,289 +67,281 @@ void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
 
 void cpu_do_cycle(Cpu *cpu)
 {
-    if (cpu->PC - 0x1000 < cpu->rom_size)
+    uint8_t opcode = fetch(cpu);
+
+    switch (opcode)
     {
-        uint8_t opcode = fetch(cpu);
 
-        switch (opcode)
-        {
+    case 0x00: // cons
+    {
+        CPU_GET_LHS_AND_RHS();
 
-        case 0x00: // cons
-        {
-            CPU_GET_LHS_AND_RHS();
+        Cons *buffer = ram_allocate(cpu->ram);
 
-            Cons *buffer = ram_allocate(cpu->ram);
+        buffer->car = lhs;
+        buffer->cdr = rhs;
 
-            buffer->car = lhs;
-            buffer->cdr = rhs;
+        cpu->PC = start_pc;
 
-            cpu->PC = start_pc;
+        set_from_special_byte((uint64_t)buffer - (uint64_t)cpu->ram->buffer, cpu);
 
-            set_from_special_byte((uint64_t)buffer - (uint64_t)cpu->ram->buffer, cpu);
+        cpu->PC = new_prev + 1;
 
-            cpu->PC = new_prev + 1;
-
-            break;
-        }
-
-        case 0x1: // car
-        {
-            CPU_CELL_OP(car);
-            break;
-        }
-
-        case 0x2: // cdr
-        {
-            CPU_CELL_OP(cdr);
-            break;
-        }
-
-        case 0x3: // nop
-        {
-            info("%x", cpu->D);
-
-            break;
-        }
-
-        case 0x4: // LDR
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            (void)lhs;
-
-            uint32_t value = 0;
-
-            bus_read(rhs, MEM_BYTE, &value, cpu->ram, cpu->bus);
-
-            cpu->PC = start_pc;
-
-            set_from_special_byte(value, cpu);
-
-            cpu->PC = new_prev;
-
-            break;
-        }
-
-        case 0x5: // STR
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            bus_write(lhs, rhs, MEM_BYTE, cpu->ram, cpu->bus);
-
-            break;
-        }
-
-        case 0x6: // Add
-        {
-
-            CPU_OP(+);
-
-            break;
-        }
-
-        case 0x7: // sub
-        {
-            CPU_OP(-);
-            break;
-        }
-
-        case 0x8: // div
-        {
-            CPU_OP(/);
-            break;
-        }
-
-        case 0x9: // mul
-        {
-            CPU_OP(*);
-            break;
-        }
-
-        case 0xA: // mod
-        {
-            CPU_OP(%);
-            break;
-        }
-
-        case 0xB: // not
-        {
-            CPU_SOP(~);
-
-            break;
-        }
-
-        case 0xC: // and
-        {
-            CPU_OP(&);
-            break;
-        }
-
-        case 0xD: // or
-        {
-            CPU_OP(|);
-            break;
-        }
-
-        case 0xE: // xor
-        {
-            CPU_OP(^);
-            break;
-        }
-
-        case 0xF: // push
-        {
-            uint32_t inst_size = 0;
-            uint32_t val = get_val_from_special_byte(&inst_size, cpu);
-
-            push(val, cpu);
-
-            break;
-        }
-
-        case 0x10: // pop
-        {
-            pop_from_special_byte(cpu);
-            break;
-        }
-
-        case 0x11: // JMP
-        {
-            uint32_t addr = get_val_from_special_byte(NULL, cpu);
-            cpu->PC = addr;
-            break;
-        }
-
-        case 0x12: // CMP
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            if (lhs == rhs)
-            {
-                cpu->flags.EQ = 1;
-            }
-            else
-            {
-                cpu->flags.EQ = 0;
-            }
-
-            if (lhs < rhs)
-            {
-                cpu->flags.LT = 1;
-            }
-            else
-            {
-                cpu->flags.LT = 0;
-            }
-
-            cpu->PC = new_prev;
-            break;
-        }
-
-        case 0x13: // JE
-        {
-
-            uint32_t addr = get_val_from_special_byte(NULL, cpu);
-
-            if (cpu->flags.EQ == 1)
-                cpu->PC = addr;
-
-            break;
-        }
-
-        case 0x14: // JNE
-        {
-            uint32_t addr = get_val_from_special_byte(NULL, cpu);
-
-            if (cpu->flags.EQ == 0)
-                cpu->PC = addr;
-            break;
-        }
-
-        case 0x15: // JLT
-        {
-            uint32_t addr = get_val_from_special_byte(NULL, cpu);
-
-            if (cpu->flags.LT == 1)
-                cpu->PC = addr;
-
-            break;
-        }
-
-        case 0x16: // JGT
-        {
-            uint32_t addr = get_val_from_special_byte(NULL, cpu);
-
-            if (cpu->flags.LT == 0 && cpu->flags.EQ == 0)
-                cpu->PC = addr;
-
-            break;
-        }
-
-        case 0x17: // IN
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            (void)lhs;
-
-            cpu->PC = start_pc;
-
-            set_from_special_byte(io_read(rhs), cpu);
-
-            cpu->PC = new_prev;
-
-            break;
-        }
-
-        case 0x18: // OUT
-        {
-
-            CPU_GET_LHS_AND_RHS();
-
-            io_write(lhs, rhs);
-
-            break;
-        }
-
-        case 0x19: // STW
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            bus_write(lhs, MEM_4_BYTES, rhs, cpu->ram, cpu->bus);
-
-            break;
-        }
-
-        case 0x1A: // LDW
-        {
-            CPU_GET_LHS_AND_RHS();
-
-            (void)lhs;
-
-            uint32_t value = 0;
-
-            bus_read(rhs, MEM_4_BYTES, &value, cpu->ram, cpu->bus);
-
-            cpu->PC = start_pc;
-
-            set_from_special_byte(value, cpu);
-
-            cpu->PC = new_prev;
-
-            break;
-        }
-
-        default:
-        {
-            warn("invalid opcode: %x at PC=%x", opcode, cpu->PC);
-            exit(-1);
-            break;
-        }
-        }
+        break;
     }
 
-    else
+    case 0x1: // car
     {
-        free(cpu->ram->buffer);
-        exit(0);
+        CPU_CELL_OP(car);
+        break;
+    }
+
+    case 0x2: // cdr
+    {
+        CPU_CELL_OP(cdr);
+        break;
+    }
+
+    case 0x3: // nop
+    {
+        info("%x", cpu->PC);
+
+        break;
+    }
+
+    case 0x4: // LDR
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        (void)lhs;
+
+        uint32_t value = 0;
+
+        bus_read(rhs, MEM_BYTE, &value, cpu->ram, cpu->bus);
+
+        cpu->PC = start_pc;
+
+        set_from_special_byte(value, cpu);
+
+        cpu->PC = new_prev;
+
+        break;
+    }
+
+    case 0x5: // STR
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        bus_write(lhs, rhs, MEM_BYTE, cpu->ram, cpu->bus);
+
+        break;
+    }
+
+    case 0x6: // Add
+    {
+
+        CPU_OP(+);
+
+        break;
+    }
+
+    case 0x7: // sub
+    {
+        CPU_OP(-);
+        break;
+    }
+
+    case 0x8: // div
+    {
+        CPU_OP(/);
+        break;
+    }
+
+    case 0x9: // mul
+    {
+        CPU_OP(*);
+        break;
+    }
+
+    case 0xA: // mod
+    {
+        CPU_OP(%);
+        break;
+    }
+
+    case 0xB: // not
+    {
+        CPU_SOP(~);
+
+        break;
+    }
+
+    case 0xC: // and
+    {
+        CPU_OP(&);
+        break;
+    }
+
+    case 0xD: // or
+    {
+        CPU_OP(|);
+        break;
+    }
+
+    case 0xE: // xor
+    {
+        CPU_OP(^);
+        break;
+    }
+
+    case 0xF: // push
+    {
+        uint32_t inst_size = 0;
+        uint32_t val = get_val_from_special_byte(&inst_size, cpu);
+
+        push(val, cpu);
+
+        break;
+    }
+
+    case 0x10: // pop
+    {
+        pop_from_special_byte(cpu);
+        break;
+    }
+
+    case 0x11: // JMP
+    {
+        uint32_t addr = get_val_from_special_byte(NULL, cpu);
+
+        cpu->PC = addr;
+        break;
+    }
+
+    case 0x12: // CMP
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        if (lhs == rhs)
+        {
+            cpu->flags.EQ = 1;
+        }
+        else
+        {
+            cpu->flags.EQ = 0;
+        }
+
+        if (lhs < rhs)
+        {
+            cpu->flags.LT = 1;
+        }
+        else
+        {
+            cpu->flags.LT = 0;
+        }
+
+        cpu->PC = new_prev;
+        break;
+    }
+
+    case 0x13: // JE
+    {
+
+        uint32_t addr = get_val_from_special_byte(NULL, cpu);
+
+        if (cpu->flags.EQ == 1)
+            cpu->PC = addr;
+
+        break;
+    }
+
+    case 0x14: // JNE
+    {
+        uint32_t addr = get_val_from_special_byte(NULL, cpu);
+
+        if (cpu->flags.EQ == 0)
+            cpu->PC = addr;
+        break;
+    }
+
+    case 0x15: // JLT
+    {
+        uint32_t addr = get_val_from_special_byte(NULL, cpu);
+
+        if (cpu->flags.LT == 1)
+            cpu->PC = addr;
+
+        break;
+    }
+
+    case 0x16: // JGT
+    {
+        uint32_t addr = get_val_from_special_byte(NULL, cpu);
+
+        if (cpu->flags.LT == 0 && cpu->flags.EQ == 0)
+            cpu->PC = addr;
+
+        break;
+    }
+
+    case 0x17: // IN
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        (void)lhs;
+
+        cpu->PC = start_pc;
+
+        set_from_special_byte(io_read(rhs), cpu);
+
+        cpu->PC = new_prev;
+
+        break;
+    }
+
+    case 0x18: // OUT
+    {
+
+        CPU_GET_LHS_AND_RHS();
+
+        io_write(lhs, rhs);
+
+        break;
+    }
+
+    case 0x19: // STW
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        bus_write(lhs, MEM_4_BYTES, rhs, cpu->ram, cpu->bus);
+
+        break;
+    }
+
+    case 0x1A: // LDW
+    {
+        CPU_GET_LHS_AND_RHS();
+
+        (void)lhs;
+
+        uint32_t value = 0;
+
+        bus_read(rhs, MEM_4_BYTES, &value, cpu->ram, cpu->bus);
+
+        cpu->PC = start_pc;
+
+        set_from_special_byte(value, cpu);
+
+        cpu->PC = new_prev;
+
+        break;
+    }
+
+    default:
+    {
+        warn("invalid opcode: %x at PC=%x", opcode, cpu->PC);
+        exit(-1);
+        break;
+    }
     }
 }

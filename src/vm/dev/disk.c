@@ -1,11 +1,13 @@
-#include "dev/bus.h"
-#include "ram.h"
 #include <dev/disk.h>
+#include <stdlib.h>
+#include <string.h>
 
 uint32_t disk_read()
 {
     return 0;
 }
+
+uint8_t *get_disk_data();
 
 void disk_write(uint32_t address, Ram *ram)
 {
@@ -20,7 +22,10 @@ void disk_write(uint32_t address, Ram *ram)
 
     if (command->type == 0) // Read
     {
-        info("reading %d sector(s) at %x", command->sectors, command->address);
+        for (int i = 0; i < 512 * command->sectors; i++)
+        {
+            ram_write(command->address + i, MEM_BYTE, get_disk_data()[i], ram);
+        }
     }
 
     else if (command->type == 1) // Write

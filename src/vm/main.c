@@ -2,6 +2,7 @@
 #include <dev/disk.h>
 #include <errno.h>
 #include <lib/log.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +36,26 @@ int get_file_size(FILE *fp)
     return size;
 }
 
+void read_file(char *file, uint8_t *buffer, bool alloc)
+{
+    FILE *fp = fopen(file, "rb");
+
+    if (fp == NULL)
+    {
+        perror("fopen(): couldn't open file");
+        exit(errno);
+    }
+
+    int size = get_file_size(fp);
+
+    if (alloc)
+        buffer = malloc(size);
+
+    fread(buffer, 1, size, fp);
+
+    fclose(fp);
+}
+
 int load_file(char *file, Ram *ram)
 {
     FILE *fp = fopen(file, "rb");
@@ -49,9 +70,11 @@ int load_file(char *file, Ram *ram)
 
     uint8_t *buffer = malloc(size);
 
-    fread(buffer, 1, size, fp);
+    read_file(file, buffer, false);
 
     write_to_ram(buffer, size, ram);
+
+    fclose(fp);
 
     return size;
 }
@@ -63,6 +86,13 @@ uint32_t get_memory_size()
     return ram_size * 1024 * 1024;
 }
 
+uint8_t *disk_data;
+
+uint8_t *get_disk_data()
+{
+    return disk_data;
+}
+
 int main(int argc, char **argv)
 {
     shift(&argc, &argv);
@@ -72,6 +102,7 @@ int main(int argc, char **argv)
     Bus bus = {0};
 
     char *file = NULL;
+    char *disk_file = NULL;
 
     while (argc > 0)
     {
@@ -80,6 +111,11 @@ int main(int argc, char **argv)
         if (strcmp(arg, "-rom") == 0)
         {
             file = shift(&argc, &argv);
+        }
+
+        else if (strcmp(arg, "-disk") == 0)
+        {
+            disk_file = shift(&argc, &argv);
         }
 
         else if (strcmp(arg, "-m") == 0)
@@ -110,6 +146,16 @@ int main(int argc, char **argv)
         error("no bootrom specified, try passing -rom to the emulator");
         exit(-1);
     }
+
+    if (!disk_file)
+    {
+        error("No disk file specified, try passing -disk to emulator");
+        exit(-1);
+    }
+
+    disk_data = calloc(1024, 1);
+
+    read_file(disk_file, disk_data, false);
 
     ram_init(&ram);
     bus_init(&bus);
