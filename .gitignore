@@ -2,3 +2,4 @@
 build
 *.o
 bios.bin
+*.img
