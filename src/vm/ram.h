@@ -19,7 +19,7 @@ typedef struct
 } Ram;
 
 void ram_init(Ram *ram);
-void ram_write(uint32_t addr, uint32_t data, Ram *ram);
+void ram_write(uint32_t addr, MemSize size, uint32_t data, Ram *ram);
 void ram_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram);
 
 void *ram_allocate(Ram *ram);

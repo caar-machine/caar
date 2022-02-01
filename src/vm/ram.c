@@ -21,9 +21,18 @@ void ram_init(Ram *ram)
     ram->allocator_index = 4095;
 }
 
-void ram_write(uint32_t addr, uint32_t data, Ram *ram)
+void ram_write(uint32_t addr, MemSize size, uint32_t data, Ram *ram)
 {
-    ram->buffer[addr] = data;
+    if (size == MEM_BYTE)
+        ram->buffer[addr] = data;
+    if (size == MEM_4_BYTES)
+    {
+        uint8_t *bytes = (uint8_t *)&data;
+        ram->buffer[addr] = bytes[0];
+        ram->buffer[addr + 1] = bytes[1];
+        ram->buffer[addr + 2] = bytes[2];
+        ram->buffer[addr + 3] = bytes[3];
+    }
 }
 
 void ram_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)

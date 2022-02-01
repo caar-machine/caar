@@ -20,6 +20,13 @@
   (display no_disk)
   (loop)
 
+(label disk_command)
+  (db 0) ; Read
+  (db 1) ; One sector
+  (db 0x8000) ; where to put the data
+  (db 0) ; padding
+  (db 0) ; padding
+
 (label main)
   (display boot_msg) ; Print welcome message
 
@@ -51,7 +58,14 @@
 
   (call find_disk)
 
+  (push #B) ; restoring state
   (display disk_found)
+  (pop #B)
+
+  (add #B 4) ; Get disk.addr
+  (ldw #D #B) ; Load it into D
+  (stw #D disk_command)  ; Write to disk address
+
 
   (loop) ; loop forever
 

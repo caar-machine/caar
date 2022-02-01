@@ -34,6 +34,39 @@ RawBus *bus_to_raw_bus(Bus bus)
     return raw_bus;
 }
 
+void bus_write(uint32_t addr, MemSize size, uint32_t value, Ram *ram, Bus *bus)
+{
+
+    if (addr >= MEMORY_SIZE + 1 && addr < MEMORY_SIZE + 0x1000)
+    {
+        warn("attempt to write at bus");
+    }
+
+    else if (addr >= MEMORY_SIZE + 0x1000 && addr < MEMORY_SIZE + 0x2000)
+    {
+        size_t index = addr - MEMORY_SIZE - 0x1000;
+
+        if (index <= 128)
+        {
+            index = 0;
+        }
+
+        else
+        {
+            index = ALIGN_DOWN(index, 128) / 128;
+        }
+
+        bus->devices[index].write(value, ram);
+    }
+
+    else
+    {
+        ram_write(addr, size, value, ram);
+    }
+
+    return;
+}
+
 void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
 {
 
@@ -46,6 +79,7 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
 
     else if (addr >= MEMORY_SIZE + 0x1000 && addr < MEMORY_SIZE + 0x2000)
     {
+
         size_t index = addr - MEMORY_SIZE - 0x1000;
 
         if (index <= 128)

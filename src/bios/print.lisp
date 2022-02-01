@@ -31,6 +31,5 @@
   ; Adding to PC the number  of bytes the following instructions will take
   (add #G 0x10) ; :meme:
   (push #G)
-  
   ; Actually printing the string
   (jmp print_str))

@@ -106,6 +106,8 @@ void cpu_do_cycle(Cpu *cpu)
 
         case 0x3: // nop
         {
+            info("%x", cpu->D);
+
             break;
         }
 
@@ -132,13 +134,7 @@ void cpu_do_cycle(Cpu *cpu)
         {
             CPU_GET_LHS_AND_RHS();
 
-            ram_write(lhs, rhs, cpu->ram);
-
-            cpu->PC = start_pc;
-
-            set_from_special_byte(0, cpu);
-
-            cpu->PC = new_prev;
+            bus_write(lhs, rhs, MEM_BYTE, cpu->ram, cpu->bus);
 
             break;
         }
@@ -310,6 +306,34 @@ void cpu_do_cycle(Cpu *cpu)
             CPU_GET_LHS_AND_RHS();
 
             io_write(lhs, rhs);
+
+            break;
+        }
+
+        case 0x19: // STW
+        {
+            CPU_GET_LHS_AND_RHS();
+
+            bus_write(lhs, MEM_4_BYTES, rhs, cpu->ram, cpu->bus);
+
+            break;
+        }
+
+        case 0x1A: // LDW
+        {
+            CPU_GET_LHS_AND_RHS();
+
+            (void)lhs;
+
+            uint32_t value = 0;
+
+            bus_read(rhs, MEM_4_BYTES, &value, cpu->ram, cpu->bus);
+
+            cpu->PC = start_pc;
+
+            set_from_special_byte(value, cpu);
+
+            cpu->PC = new_prev;
 
             break;
         }

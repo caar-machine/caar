@@ -1,4 +1,5 @@
 #include "dev/bus.h"
+#include "ram.h"
 #include <dev/disk.h>
 
 uint32_t disk_read()
@@ -6,16 +7,20 @@ uint32_t disk_read()
     return 0;
 }
 
-void disk_write(void *data, Ram *ram)
+void disk_write(uint32_t address, Ram *ram)
 {
 
-    (void)ram;
+    uint8_t bytes[6] = {0};
 
-    DiskCommand *command = (DiskCommand *)data;
+    ram_read(address, MEM_BYTE, (uint32_t *)&bytes[0], ram);
+    ram_read(address + 1, MEM_BYTE, (uint32_t *)&bytes[1], ram);
+    ram_read(address + 2, MEM_4_BYTES, (uint32_t *)(bytes + 2), ram);
+
+    DiskCommand *command = (DiskCommand *)bytes;
 
     if (command->type == 0) // Read
     {
-        warn("TODO: read");
+        info("reading %d sector(s) at %x", command->sectors, command->address);
     }
 
     else if (command->type == 1) // Write

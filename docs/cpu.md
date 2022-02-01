@@ -52,6 +52,8 @@ The following is the list of cpu opcodes:
 | 22 (0x16) | JGT      | reg/addr         | jmp if LT is clear and EQ is clear                               |
 | 23 (0x17) | IN       | reg/val, reg     | Read from port to reg                                            |
 | 24 (0x18) | OUT      | reg/val, reg/val | Write to port                                                    |
+| 25 (0x19) | STW      | reg/val, addr    | Store word                                                       |
+| 26 (0x1A) | LDW      | reg, addr        | Load word                                                        |
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.

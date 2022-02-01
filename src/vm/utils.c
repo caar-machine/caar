@@ -46,14 +46,14 @@ void push(uint32_t what, Cpu *cpu)
         uint8_t a[4];
         u32_to_u8(what, a);
 
-        ram_write(cpu->SP - 1, a[0], cpu->ram);
-        ram_write(cpu->SP - 2, a[1], cpu->ram);
-        ram_write(cpu->SP - 3, a[2], cpu->ram);
-        ram_write(cpu->SP - 4, a[3], cpu->ram);
+        ram_write(cpu->SP - 1, MEM_BYTE, a[0], cpu->ram);
+        ram_write(cpu->SP - 2, MEM_BYTE, a[1], cpu->ram);
+        ram_write(cpu->SP - 3, MEM_BYTE, a[2], cpu->ram);
+        ram_write(cpu->SP - 4, MEM_BYTE, a[3], cpu->ram);
     }
 
     else
-        ram_write(cpu->SP - 4, what, cpu->ram);
+        ram_write(cpu->SP - 4, MEM_BYTE, what, cpu->ram);
 }
 
 uint32_t pop(Cpu *cpu)

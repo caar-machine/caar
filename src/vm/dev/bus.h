@@ -14,7 +14,7 @@ typedef enum
 
 typedef struct __attribute__((packed))
 {
-    void (*write)(void *data, Ram *ram);
+    void (*write)(uint32_t address, Ram *ram);
     uint32_t (*read)();
     DeviceType type;
 
@@ -40,6 +40,8 @@ typedef struct __attribute__((packed))
 
 void bus_init(Bus *bus);
 void bus_attach(BusDevice dev, Bus *bus);
+
+void bus_write(uint32_t addr, MemSize size, uint32_t value, Ram *ram, Bus *bus);
 
 void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus);
 

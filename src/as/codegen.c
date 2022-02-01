@@ -30,7 +30,9 @@
     map_set(what, "jlt", 0x15);  \
     map_set(what, "jgt", 0x16);  \
     map_set(what, "in", 0x17);   \
-    map_set(what, "out", 0x18);
+    map_set(what, "out", 0x18);  \
+    map_set(what, "stw", 0x19);  \
+    map_set(what, "ldw", 0x1A);
 
 char *str_to_lower(char *str)
 {
@@ -67,6 +69,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
         // Get size of value
         if (val > 0xFFFFFF)
         {
+
             // if four bytes, push 4 bytes
             vec_push(&as->bytes, _bytes[0]);
             vec_push(&as->bytes, _bytes[1]);
@@ -75,6 +78,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
         }
         else if (val > 0xFFFF)
         {
+
             // three bytes
             vec_push(&as->bytes, _bytes[0]);
             vec_push(&as->bytes, _bytes[1]);
@@ -82,9 +86,10 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
         }
         else if (val > 0xFF)
         {
+
             // 2 bytes
-            vec_push(&as->bytes, _bytes[1]);
             vec_push(&as->bytes, _bytes[0]);
+            vec_push(&as->bytes, _bytes[1]);
         }
         else
         {

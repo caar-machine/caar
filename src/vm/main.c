@@ -20,7 +20,7 @@ void write_to_ram(uint8_t *buf, size_t size, Ram *ram)
 {
     for (size_t i = 0; i < size; i++)
     {
-        ram_write((uint32_t)i + 0x1000, buf[i], ram);
+        ram_write((uint32_t)i + 0x1000, MEM_BYTE, buf[i], ram);
     }
 }
 
