@@ -1,5 +1,6 @@
 #include <cpu.h>
 #include <dev/disk.h>
+#include <dev/gpu.h>
 #include <errno.h>
 #include <lib/log.h>
 #include <stdbool.h>
@@ -7,6 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
 char *shift(int *argc, char ***argv)
 {
@@ -162,13 +165,56 @@ int main(int argc, char **argv)
 
     int size = load_file(file, &ram);
 
+    gpu_init(1024, 768, &bus);
     disk_init(&bus);
 
     cpu_init(&ram, &bus, &cpu, size);
 
-    while (1)
+    SDL_Event event;
+
+    bool done = false;
+
+    int tick_start = SDL_GetTicks();
+    int tick_end = SDL_GetTicks();
+    int ticks_per_second = 60;
+    int ticks = 0;
+    int instructions_per_sec = 25000000;
+
+    while (!done)
     {
-        cpu_do_cycle(&cpu);
+        int ms = MAX(SDL_GetTicks() - tick_start, 1);
+        int instr_to_run = instructions_per_sec / ticks_per_second / ms;
+
+        tick_start = SDL_GetTicks();
+
+        for (int i = 0; i < ms; i++)
+        {
+            for (int j = 0; j < instr_to_run; j++)
+            {
+                cpu_do_cycle(&cpu);
+            }
+        }
+
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT)
+                done = true;
+        }
+
+        if (ticks % ticks_per_second == 0)
+        {
+            // FIXME: rendering is quite slow, it is the main bottleneck of the system.
+            gpu_update();
+        }
+
+        tick_end = SDL_GetTicks();
+
+        int time_left = 1000 / ticks_per_second - (int)(tick_end - tick_start);
+
+        if (time_left > 0)
+        {
+            SDL_Delay(time_left);
+        }
     }
 
     free(ram.buffer);

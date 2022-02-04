@@ -1,6 +1,7 @@
 #include "dev/bus.h"
 #include <dev/io.h>
 #include <stdio.h>
+#include <unistd.h>
 
 uint32_t io_read(int port)
 {
@@ -26,6 +27,7 @@ void io_write(int port, uint8_t data)
     switch (port)
     {
     case 0:
+        // FIXME: this is quite slow too
         putchar(data);
         break;
     case 1:

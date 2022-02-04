@@ -1,5 +1,6 @@
 #include "ram.h"
 #include <dev/bus.h>
+#include <dev/gpu.h>
 #include <stdlib.h>
 
 #define ALIGN_DOWN(NUM, WHAT) ((NUM) & ~(WHAT - 1))
@@ -27,6 +28,7 @@ RawBus *bus_to_raw_bus(Bus bus)
         for (size_t i = 0; i < bus.device_count; i++)
         {
             raw_bus->devices[i].type = bus.devices[i].type;
+
             raw_bus->devices[i].addr = i + MEMORY_SIZE + 0x1000;
         }
     }
@@ -42,19 +44,14 @@ void bus_write(uint32_t addr, MemSize size, uint32_t value, Ram *ram, Bus *bus)
         warn("attempt to write at bus");
     }
 
+    else if (addr >= FB_ADDRESS && addr <= FB_ADDRESS + FB_SIZE)
+    {
+        gpu_draw(value, addr);
+    }
+
     else if (addr >= MEMORY_SIZE + 0x1000 && addr < MEMORY_SIZE + 0x2000)
     {
         size_t index = addr - MEMORY_SIZE - 0x1000;
-
-        if (index <= 128)
-        {
-            index = 0;
-        }
-
-        else
-        {
-            index = ALIGN_DOWN(index, 128) / 128;
-        }
 
         bus->devices[index].write(value, ram);
     }
@@ -92,7 +89,7 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
             index = ALIGN_DOWN(index, 128) / 128;
         }
 
-        bus->devices[index].read();
+        *value = bus->devices[index].read();
     }
 
     else

@@ -195,7 +195,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     }
 
     default:
-        error("Unknown specifier: %x at PC=%x", specifier, cpu->PC);
+        //error("Unknown specifier: %x at PC=%x", specifier, cpu->PC);
         break;
     }
 

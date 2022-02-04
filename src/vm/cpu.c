@@ -104,8 +104,6 @@ void cpu_do_cycle(Cpu *cpu)
 
     case 0x3: // nop
     {
-        info("%x", cpu->PC);
-
         break;
     }
 

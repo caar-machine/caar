@@ -38,7 +38,7 @@ bool is_symbol(char c)
 
 bool is_digit(char c)
 {
-    return isdigit(c);
+    return isdigit(c) || isxdigit(c);
 }
 
 bool is_not_quote(char c)

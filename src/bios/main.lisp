@@ -59,7 +59,7 @@
   (cmp #A 0)
   (je print_no_devices)
 
-  (add #B 4) ; Get devices[0].size
+  (add #B 4) ; Get devices[0].type
 
   (call find_disk)
 
@@ -73,6 +73,11 @@
 
   (display bootsector_loaded)
 
+
+  (xor #C #C)
+  (xor #A #A)
+  (xor #B #B)
+
   (ldw #D addr) ; Lmao
 
   (jmp #D)
@@ -82,7 +87,6 @@
 ; Parameters:
 ; A -> device count
 ; B -> bus address
-
 (label find_disk)
   (cmp #C #A) ; if i == device_count
   (je print_no_disk) ; stop
