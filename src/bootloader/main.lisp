@@ -4,8 +4,14 @@
 (include "src/bios/print.lisp")
 (include "src/bios/macros.lisp")
 
-(label COLOR_WHITE)
-  (dw 0x00073642)
+(defmacro make-color (r g b)
+  (db 0)
+  (db r)
+  (db g)
+  (db b))
+
+(label COLOR_BG)
+  (make-color 0x7 0x36 0x42)
 
 ; TODO: stop using hardcoded fb size
 (label FB_SIZE)
@@ -25,8 +31,8 @@
   (display found_gpu)
   (pop #B)
 
-  (ldw #F COLOR_WHITE)
-  (ldw #G FB_SIZE)
+  (ldw #F COLOR_BG) ; Load background color into F
+  (ldw #G FB_SIZE) ; Load fb.size into G
 
   (add #B 4) ; Get gpu.addr
   (ldw #D #B) ; Load it into D
