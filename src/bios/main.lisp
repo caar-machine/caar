@@ -23,14 +23,10 @@
 (label disk_command)
   (db 0) ; Read
   (db 1) ; One sector
-  (db 0x8000) ; where to put the data
-  (db 0) ; padding because the address needs to be 4 bytes
-  (db 0) ; padding
+  (dw 0x8000) ; where to put the data
 
 (label addr)
-  (db 0x8000)
-  (db 0)
-  (db 0)
+  (dw 0x8000)
 
 (label main)
   (display boot_msg) ; Print welcome message
@@ -72,7 +68,6 @@
   (stw #D disk_command)  ; Write to disk address
 
   (display bootsector_loaded)
-
 
   (xor #C #C)
   (xor #A #A)

@@ -49,7 +49,7 @@ char *str_to_lower(char *str)
 
 // Expressions are registers or immediate values.
 // TODO: add support for dereferences.
-void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
+void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, bool word)
 {
     switch (value.type)
     {
@@ -66,35 +66,47 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro)
 
         Byte *_bytes = (Byte *)&val;
 
-        // Get size of value
-        if (val > 0xFFFFFF)
+        if (!word)
         {
+            // Get size of value
+            if (val > 0xFFFFFF)
+            {
 
-            // if four bytes, push 4 bytes
+                // if four bytes, push 4 bytes
+                vec_push(&as->bytes, _bytes[0]);
+                vec_push(&as->bytes, _bytes[1]);
+                vec_push(&as->bytes, _bytes[2]);
+                vec_push(&as->bytes, _bytes[3]);
+            }
+            else if (val > 0xFFFF)
+            {
+
+                // three bytes
+                vec_push(&as->bytes, _bytes[0]);
+                vec_push(&as->bytes, _bytes[1]);
+                vec_push(&as->bytes, _bytes[2]);
+            }
+            else if (val > 0xFF)
+            {
+
+                // 2 bytes
+                vec_push(&as->bytes, _bytes[0]);
+                vec_push(&as->bytes, _bytes[1]);
+            }
+            else
+            {
+                vec_push(&as->bytes, _bytes[0]);
+            }
+        }
+
+        else
+        {
             vec_push(&as->bytes, _bytes[0]);
             vec_push(&as->bytes, _bytes[1]);
             vec_push(&as->bytes, _bytes[2]);
             vec_push(&as->bytes, _bytes[3]);
         }
-        else if (val > 0xFFFF)
-        {
 
-            // three bytes
-            vec_push(&as->bytes, _bytes[0]);
-            vec_push(&as->bytes, _bytes[1]);
-            vec_push(&as->bytes, _bytes[2]);
-        }
-        else if (val > 0xFF)
-        {
-
-            // 2 bytes
-            vec_push(&as->bytes, _bytes[0]);
-            vec_push(&as->bytes, _bytes[1]);
-        }
-        else
-        {
-            vec_push(&as->bytes, _bytes[0]);
-        }
         break;
     }
 
@@ -217,12 +229,20 @@ void codegen_call(AstCall call, Assembler *as, bool is_macro)
         {
             for (int i = 0; i < call.params.length; i++)
             {
-                codegen_expr(call.params.data[i], as, true, is_macro);
+                codegen_expr(call.params.data[i], as, true, is_macro, false);
             }
 
             return;
         }
+        else if (!strcmp(call.name, "dw"))
+        {
+            for (int i = 0; i < call.params.length; i++)
+            {
+                codegen_expr(call.params.data[i], as, true, is_macro, true);
+            }
 
+            return;
+        }
         else if (!strcmp(call.name, "include"))
         {
             return;
@@ -238,7 +258,7 @@ void codegen_call(AstCall call, Assembler *as, bool is_macro)
 
     for (int i = 0; i < call.params.length; i++)
     {
-        codegen_expr(call.params.data[i], as, false, is_macro);
+        codegen_expr(call.params.data[i], as, false, is_macro, false);
     }
 }
 

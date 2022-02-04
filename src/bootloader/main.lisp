@@ -5,18 +5,11 @@
 (include "src/bios/macros.lisp")
 
 (label COLOR_WHITE)
-  (db 0xd5)
-  (db 0xe8)
-  (db 0xee)
-  (db 0xff)
+  (dw 0x00073642)
 
-; Lmao, again
-; I really need to fix byte sizing or idk how it's called
+; TODO: stop using hardcoded fb size
 (label FB_SIZE)
-  (db 0x00)
-  (db 0x00)
-  (db 0xc)
-  (db 0)
+  (dw 0xc0000)
 
 
 (label main)
