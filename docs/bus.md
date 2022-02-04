@@ -8,15 +8,14 @@ The bus has the following structure (pseudocode):
 ```c
 struct BusDevice
 {
-    int type;
-    uint32_t addr; // Command buffer, 128 bytes
-    int size; // Command buffer size
+    uint32_t type;
+    uint32_t addr;
 };
 
 struct Bus
 {
+    uint32_t device_count;
     BusDevice devices[32];
-    int device_count;
 };
 ```
 
@@ -36,5 +35,5 @@ for(int i = 0; i < bus->device_count; i++)
 ```
 
 ## Device commands
-Device commands are sent to the device through its buffer.
+Device commands are sent to device's address, note that you need to send an address and not raw data.
 Device commands can be, for example, a disk read.
