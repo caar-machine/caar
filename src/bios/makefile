@@ -1,5 +1,5 @@
 MAIN_FILE = main.lisp
-BINARY = ../../boot.bin
+BINARY = ../../bios.bin
 AS = ../../as.elf
 
 $(BINARY): $(MAIN_FILE)

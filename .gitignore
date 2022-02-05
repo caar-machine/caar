@@ -3,3 +3,4 @@ build
 *.o
 bios.bin
 *.img
+*.bin
