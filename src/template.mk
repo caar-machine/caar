@@ -1,16 +1,4 @@
 
-ifneq ($(words $(MAKECMDGOALS)),1)
-.DEFAULT_GOAL = all
-%:
-	@$(MAKE) $@ --no-print-directory -rRf $(firstword $(MAKEFILE_LIST))
-else
-ifndef ECHO
-T := $(shell $(MAKE) $(MAKECMDGOALS) --no-print-directory -nrRf $(firstword $(MAKEFILE_LIST)) ECHO="COUNTTHIS" | grep -c "COUNTTHIS")
-N := x
-C = $(words $N)$(eval N := x $N)
-ECHO=printf "[$C/$T] $1     \r"
-endif
-
 CC ?= gcc
 CFILES += $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 HFILES += $(wildcard $(SRC_DIR)/*.h) $(wildcard $(SRC_DIR)/*/*.h)
@@ -30,9 +18,8 @@ $(BUILD_DIR)/%.o: %.c $(HFILES)
 
 $(BINARY): $(OFILES)
 	@mkdir -p $(@D)
-	@$(call ECHO,LD $@)
 	@$(CC) -o $@ $^ $(LDFLAGS)
+	@echo "Built $(TARGET)"
 
 clean:
 	 @-rm -rf $(BUILD_DIR) $(BINARY)
-endif

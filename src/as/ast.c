@@ -131,7 +131,7 @@ AstNode parse_token(int *index, Ast *ast, Tokens tokens)
     {
         node.type = AST_VALUE;
         node.value.type = AST_VAL_SYMBOL;
-        node.value.str_ = tokens.data[*index]._symbol;
+        node.value.str_ = strdup(tokens.data[*index]._symbol);
         break;
     }
 

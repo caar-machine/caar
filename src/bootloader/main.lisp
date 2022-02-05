@@ -1,22 +1,15 @@
 (org 0x8000)
 (jmp main)
 
-(include "src/bios/print.lisp")
-(include "src/bios/macros.lisp")
-
-(defmacro make-color (r g b)
-  (db 0)
-  (db r)
-  (db g)
-  (db b))
+(include "../bios/print.lisp")
+(include "../bios/macros.lisp")
 
 (label COLOR_BG)
-  (make-color 0x7 0x36 0x42)
+  (dw 0x073642)
 
 ; TODO: stop using hardcoded fb size
 (label FB_SIZE)
   (dw 0xc0000)
-
 
 (label main)
   (display searching_gpu)
