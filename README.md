@@ -9,8 +9,11 @@ The goal of this project is to be able to run a somewhat functional operating sy
 ### Emulator
 - [x] CPU
 - [x] RAM
-- [ ] video memory
-- [ ] IO ports
+- [x] GPU
+- [x] Bus
+- [x] Interrupts 
+- [x] Keyboard
+- [ ] Paging 
 ### Assembler
 - [x] Tokenizer
 - [x] Parser
