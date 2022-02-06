@@ -7,6 +7,7 @@
 
 (include "print.lisp")
 (include "macros.lisp")
+(include "ivt.lisp")
 
 (label print_unknown)
   (display unknown)
@@ -71,6 +72,9 @@
   (xor #C #C)
   (xor #A #A)
   (xor #B #B)
+
+
+  (livt ivt)
 
   (jmp 0x8000)
 

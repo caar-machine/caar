@@ -6,7 +6,7 @@
 typedef struct __attribute__((packed))
 {
     uint8_t used : 1;
-    uint8_t dpl : 2;
+    uint8_t dpl : 1;
     uint32_t address;
 } IvtEntry;
 

@@ -221,7 +221,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     }
 
     default:
-        //error("Unknown specifier: %x at PC=%x", specifier, cpu->PC);
+        ivt_trigger_interrupt(0, false, cpu);
         break;
     }
 
@@ -295,6 +295,10 @@ void set_from_special_byte(uint32_t val, Cpu *cpu)
             ivt_set(val, cpu->ram);
             CPU_REG_STUB(IVT);
         }
+        else
+        {
+            ivt_trigger_interrupt(2, false, cpu);
+        }
         break;
     }
 
@@ -304,6 +308,10 @@ void set_from_special_byte(uint32_t val, Cpu *cpu)
         {
             CPU_REG_STUB(PT);
         }
+        else
+        {
+            ivt_trigger_interrupt(2, false, cpu);
+        }
         break;
     }
 
@@ -312,6 +320,10 @@ void set_from_special_byte(uint32_t val, Cpu *cpu)
         if (cpu->PL == 0)
         {
             CPU_REG_STUB(PL);
+        }
+        else
+        {
+            ivt_trigger_interrupt(2, false, cpu);
         }
         break;
     }

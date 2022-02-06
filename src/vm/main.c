@@ -1,3 +1,5 @@
+#include "ivt.h"
+#include <SDL2/SDL_events.h>
 #include <cpu.h>
 #include <dev/disk.h>
 #include <dev/gpu.h>
@@ -198,7 +200,14 @@ int main(int argc, char **argv)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
+            {
                 done = true;
+            }
+
+            if (event.type == SDL_KEYDOWN)
+            {
+                ivt_trigger_interrupt(10, false, &cpu);
+            }
         }
 
         if (ticks % ticks_per_second == 0)
