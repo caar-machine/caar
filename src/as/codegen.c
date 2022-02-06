@@ -32,7 +32,8 @@
     map_set(what, "in", 0x17);   \
     map_set(what, "out", 0x18);  \
     map_set(what, "stw", 0x19);  \
-    map_set(what, "ldw", 0x1A);
+    map_set(what, "ldw", 0x1A);  \
+    map_set(what, "int", 0x1B);
 
 char *str_to_lower(char *str)
 {
@@ -61,7 +62,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
         if (!defining)
         {
             vec_push(&as->bytes, 0x1A);
-            vec_push(&as->bytes, (val > 0xFFFFFF) ? 0x29 : ((val > 0x00FFFF) ? 0x28 : ((val > 0x0000FF) ? 0x27 : 0x26)));
+            vec_push(&as->bytes, (val > 0xFFFFFF) ? 0x2d : ((val > 0x00FFFF) ? 0x2c : ((val > 0x0000FF) ? 0x2b : 0x2a)));
         }
 
         Byte *_bytes = (Byte *)&val;
@@ -112,8 +113,11 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
 
     case AST_VAL_SYMBOL:
     {
-        vec_push(&as->bytes, 0x1A);
-        vec_push(&as->bytes, 0x29);
+        if (!defining)
+        {
+            vec_push(&as->bytes, 0x1A);
+            vec_push(&as->bytes, 0x2D);
+        }
 
         char *what = value.symbol_;
 
@@ -157,13 +161,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
 
     case AST_VAL_REG:
     {
-        if (value.reg_ > REG_SP)
-        {
-            error("Invalid register.");
-        }
-
         vec_push(&as->bytes, 0x1B + value.reg_);
-
         break;
     }
     }
@@ -332,10 +330,10 @@ Bytes codegen(Ast ast)
 
         Byte *byte = (Byte *)addr;
 
-        as.bytes.data[ref.byte_index + 3] = byte[0];
-        as.bytes.data[ref.byte_index + 2] = byte[1];
-        as.bytes.data[ref.byte_index + 1] = byte[2];
-        as.bytes.data[ref.byte_index] = byte[3];
+        as.bytes.data[ref.byte_index] = byte[0];
+        as.bytes.data[ref.byte_index + 1] = byte[1];
+        as.bytes.data[ref.byte_index + 2] = byte[2];
+        as.bytes.data[ref.byte_index + 3] = byte[3];
     }
 
     return as.bytes;

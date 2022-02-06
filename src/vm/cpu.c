@@ -2,6 +2,7 @@
 #include "ram.h"
 #include <cpu.h>
 #include <dev/bus.h>
+#include <ivt.h>
 #include <lib/log.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -63,6 +64,7 @@ void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
     cpu->rom_size = rom_size;
     cpu->flags.EQ = 0;
     cpu->flags.LT = 0;
+    cpu->PL = 0;
 }
 
 void cpu_do_cycle(Cpu *cpu)
@@ -331,6 +333,15 @@ void cpu_do_cycle(Cpu *cpu)
         set_from_special_byte(value, cpu);
 
         cpu->PC = new_prev;
+
+        break;
+    }
+
+    case 0x1B: // Int
+    {
+        uint32_t val = get_val_from_special_byte(NULL, cpu);
+
+        ivt_trigger_interrupt(val, true, cpu);
 
         break;
     }

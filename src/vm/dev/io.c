@@ -7,6 +7,8 @@ uint32_t io_read(int port)
 {
     switch (port)
     {
+    case 0:
+        return getchar();
     case 1:
         return bus_get_addr();
 
@@ -27,7 +29,6 @@ void io_write(int port, uint8_t data)
     switch (port)
     {
     case 0:
-        // FIXME: this is quite slow too
         putchar(data);
         break;
     case 1:

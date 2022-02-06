@@ -7,9 +7,33 @@
 (label COLOR_BG)
   (dw 0x073642)
 
+(label COLOR_FG)
+  (dw 0xffffff)
+
+
 ; TODO: stop using hardcoded fb size
 (label FB_SIZE)
   (dw 0xc0000)
+
+(label some_char)
+  (db 0)
+
+; Function: fill
+; fill screens
+; params:
+; E -> fb.size
+; F -> color
+(label fill-screen)
+  (cmp #C #E) ; if C == fb.size, stop
+  (je stop)
+  (stw #D #F) ; *D = color
+  (add #D 1) ; D++
+  (add #C 1) ; C++
+  (jmp fill-screen)
+
+ (label stop)
+    (xor #C #C)
+    (ret)
 
 (label main)
   (display searching_gpu)
@@ -25,7 +49,7 @@
   (pop #B)
 
   (ldw #F COLOR_BG) ; Load background color into F
-  (ldw #G FB_SIZE) ; Load fb.size into G
+  (ldw #E FB_SIZE) ; Load fb.size into E
 
   (add #B 4) ; Get gpu.addr
   (ldw #D #B) ; Load it into D
@@ -33,17 +57,10 @@
 
   (xor #C #C) ; Making sure C is 0
 
-  (label draw)
-    (cmp #C #G) ; if C == fb.size, stop
-    (je stop)
-    (stw #D #F) ; *D = color
-    (add #D 1) ; D++
-    (add #C 1) ; C++
-    (jmp draw)
+  (call fill-screen)
 
   (display hello)
 
-(label stop)
   (loop)
 
 

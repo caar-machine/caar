@@ -3,7 +3,7 @@ CC ?= gcc
 CFILES += $(wildcard $(SRC_DIR)/*.c) $(wildcard $(SRC_DIR)/*/*.c)
 HFILES += $(wildcard $(SRC_DIR)/*.h) $(wildcard $(SRC_DIR)/*/*.h)
 OFILES += $(patsubst %.c, $(BUILD_DIR)/%.o, $(CFILES))
-CFLAGS += -O2  
+CFLAGS += -O0
 
 BINARY = ../../$(TARGET).elf
 

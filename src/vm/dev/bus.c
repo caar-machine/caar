@@ -53,6 +53,9 @@ void bus_write(uint32_t addr, MemSize size, uint32_t value, Ram *ram, Bus *bus)
     {
         size_t index = addr - MEMORY_SIZE - 0x1000;
 
+        if (index > bus->device_count)
+            error("Out of bounds write to bus.");
+
         bus->devices[index].write(value, ram);
     }
 
@@ -88,6 +91,9 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
         {
             index = ALIGN_DOWN(index, 128) / 128;
         }
+
+        if (index > bus->device_count)
+            error("Out of bounds read to bus.");
 
         *value = bus->devices[index].read();
     }

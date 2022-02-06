@@ -5,13 +5,18 @@ The CAAR CPU is designed to run LISP code efficiently, by having opcodes such as
 Addresses are 32 bit
 
 ## Registers
-There are 8 general registers and 2 special ones:
+There are 8 general registers and 6 special ones:
 
 ```
 A,B,C,D,E,F,G,H -> General
 
 PC -> Program Counter
 SP -> Stack Pointer
+
+IVT -> Points to the IVT
+PT -> page table
+PL -> Privilege level
+PF -> Set to the address where a pagefault occured
 ```
 
 ## Flags
@@ -54,6 +59,7 @@ The following is the list of cpu opcodes:
 | 24 (0x18) | OUT      | reg/val, reg/val | Write to port                                                    |
 | 25 (0x19) | STW      | reg/val, addr    | Store word                                                       |
 | 26 (0x1A) | LDW      | reg, addr        | Load word                                                        |
+| 27 (0x1B) | INT      | reg/val          | Trigger interrupt                                                |
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.
@@ -62,11 +68,11 @@ therefore, `(add A 2)` is `0x6 0x1b 0x1a 0x27 2` (add + A + immediate value + by
 | Value               | Type                   |
 | ------------------- | ---------------------- |
 | 26     (0x1A)       | Immediate value        |
-| 27..36 (0x1B..0x24) | Registers from A to SP |
-| 37     (0x25)       | Address dereference    |
-| 38     (0x26)       | One byte               |
-| 39     (0x27)       | Two bytes              |
-| 40     (0x28)       | Three bytes            |
-| 41     (0x29)       | Four bytes             |
+| 27..40 (0x1B..0x28) | Registers from A to PF |
+| 37     (0x29)       | Address dereference    |
+| 38     (0x2a)       | One byte               |
+| 39     (0x2b)       | Two bytes              |
+| 40     (0x2c)       | Three bytes            |
+| 41     (0x2d)       | Four bytes             |
 
 `(add [1] 2)` is `0x6 0x26 1 0x1a 2`

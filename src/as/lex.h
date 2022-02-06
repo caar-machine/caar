@@ -27,6 +27,10 @@ typedef enum
     REG_H,
     REG_PC,
     REG_SP,
+    REG_IVT,
+    REG_PT,
+    REG_PL,
+    REG_PF,
 } Register;
 
 typedef struct

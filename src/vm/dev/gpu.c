@@ -33,9 +33,7 @@ void gpu_write(uint32_t data, Ram *ram)
 
 void gpu_update()
 {
-
     SDL_UpdateTexture(current_gpu.texture, NULL, current_gpu.pixels, current_gpu.width * sizeof(uint32_t));
-    SDL_RenderClear(current_gpu.renderer);
     SDL_RenderCopy(current_gpu.renderer, current_gpu.texture, NULL, NULL);
     SDL_RenderPresent(current_gpu.renderer);
 }
@@ -54,6 +52,8 @@ void gpu_init(int width, int height, Bus *bus)
     current_gpu.pixels = calloc(width * height, 1);
 
     current_gpu.texture = SDL_CreateTexture(current_gpu.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
+
+    SDL_RenderClear(current_gpu.renderer);
 
     BusDevice dev = {.read = gpu_read, .write = gpu_write, .type = BUS_DEV_GPU};
 

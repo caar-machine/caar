@@ -203,10 +203,8 @@ int main(int argc, char **argv)
 
         if (ticks % ticks_per_second == 0)
         {
-            // FIXME: rendering is quite slow, it is the main bottleneck of the system.
             gpu_update();
         }
-
         tick_end = SDL_GetTicks();
 
         int time_left = 1000 / ticks_per_second - (int)(tick_end - tick_start);

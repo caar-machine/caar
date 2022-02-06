@@ -28,6 +28,9 @@
 (label addr)
   (dw 0x8000)
 
+(label text)
+  (db "hello" #\nl 0)
+
 (label main)
   (display boot_msg) ; Print welcome message
 
@@ -59,8 +62,10 @@
 
   (call find_disk)
 
-  (push #B) ; restoring state
+  (push #B) ; We do this to restore the state of #B
+
   (display disk_found)
+
   (pop #B)
 
   (add #B 4) ; Get disk.addr

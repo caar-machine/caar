@@ -124,6 +124,16 @@ Tokens lex(char *s)
                     curr._register = REG_A;
                     break;
 
+                case 'i':
+                {
+                    s++;
+                    if (tolower(*s) == 'v' && tolower(*(s + 1)) == 't')
+                        curr._register = REG_IVT;
+                    s++;
+
+                    break;
+                }
+
                 case 'b':
                     curr._register = REG_B;
                     break;
@@ -158,6 +168,22 @@ Tokens lex(char *s)
                     {
                         curr._register = REG_PC;
                     }
+
+                    else if (tolower(*s) == 'f')
+                    {
+                        curr._register = REG_PF;
+                    }
+
+                    else if (tolower(*s) == 't')
+                    {
+                        curr._register = REG_PT;
+                    }
+
+                    else if (tolower(*s) == 'l')
+                    {
+                        curr._register = REG_PL;
+                    }
+
                     break;
 
                 case '\\':
@@ -183,7 +209,7 @@ Tokens lex(char *s)
                     s++;
                     if (tolower(*s) == 'p')
                     {
-                        curr._register = REG_PC;
+                        curr._register = REG_SP;
                     }
                     break;
 

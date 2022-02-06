@@ -9,7 +9,7 @@
 
 typedef struct
 {
-    uint32_t A, B, C, D, E, F, G, H, SP, PC;
+    uint32_t A, B, C, D, E, F, G, H, SP, PC, IVT, PT, PF, PL;
 
     struct
     {

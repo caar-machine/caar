@@ -6,6 +6,14 @@ uint32_t get_memory_size();
 
 #define MEMORY_SIZE get_memory_size()
 
+static inline uint32_t to_le(uint32_t num)
+{
+    return ((num >> 24) & 0xff) |
+           ((num << 8) & 0xff0000) |
+           ((num >> 8) & 0xff00) |
+           ((num << 24) & 0xff000000);
+}
+
 typedef enum
 {
     MEM_BYTE,

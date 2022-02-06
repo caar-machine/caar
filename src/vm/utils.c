@@ -1,6 +1,7 @@
 #include "ram.h"
 #include <cpu.h>
 #include <dev/bus.h>
+#include <ivt.h>
 #include <lib/log.h>
 #include <stdint.h>
 
@@ -104,7 +105,7 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         uint8_t sspec = fetch(cpu);
 
         // 1 byte
-        if (sspec == 0x26)
+        if (sspec == 0x2A)
         {
             uint8_t ret = fetch(cpu);
 
@@ -114,23 +115,29 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
         }
 
         // 2 bytes
-        if (sspec == 0x27)
+        if (sspec == 0x2B)
         {
-            uint16_t ret = fetch16(cpu);
+            (void)fetch16;
+
+            uint8_t bytes[] = {fetch(cpu), fetch(cpu)};
 
             if (size)
                 *size = 4;
 
-            return ret;
+            return *(uint16_t *)bytes;
         }
 
         // 4 bytes
-        else if (sspec == 0x29)
+        else if (sspec == 0x2D)
         {
-            uint32_t ret = fetch32(cpu);
+            (void)fetch32;
+
+            uint8_t bytes[] = {fetch(cpu), fetch(cpu), fetch(cpu), fetch(cpu)};
+
             if (size)
                 *size = 6;
-            return ret;
+
+            return *(uint32_t *)bytes;
         }
 
         break;
@@ -176,7 +183,6 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
 
     case 0x23:
     {
-
         CPU_REG_STUB(PC);
     }
 
@@ -186,6 +192,26 @@ uint32_t get_val_from_special_byte(uint32_t *size, Cpu *cpu)
     }
 
     case 0x25:
+    {
+        CPU_REG_STUB(IVT);
+    }
+
+    case 0x26:
+    {
+        CPU_REG_STUB(PT);
+    }
+
+    case 0x27:
+    {
+        CPU_REG_STUB(PL);
+    }
+
+    case 0x28:
+    {
+        CPU_REG_STUB(PF);
+    }
+
+    case 0x29:
     {
         uint32_t ret = 0;
 
@@ -260,6 +286,43 @@ void set_from_special_byte(uint32_t val, Cpu *cpu)
     case 0x24:
     {
         CPU_REG_STUB(SP);
+    }
+
+    case 0x25:
+    {
+        if (cpu->PL == 0)
+        {
+            ivt_set(val, cpu->ram);
+            CPU_REG_STUB(IVT);
+        }
+        break;
+    }
+
+    case 0x26:
+    {
+        if (cpu->PL == 0)
+        {
+            CPU_REG_STUB(PT);
+        }
+        break;
+    }
+
+    case 0x27:
+    {
+        if (cpu->PL == 0)
+        {
+            CPU_REG_STUB(PL);
+        }
+        break;
+    }
+
+    case 0x28:
+    {
+        if (cpu->PF == 0)
+        {
+            CPU_REG_STUB(PF);
+        }
+        break;
     }
     }
 }
