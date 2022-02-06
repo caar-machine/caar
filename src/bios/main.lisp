@@ -25,12 +25,6 @@
   (db 1) ; One sector
   (dw 0x8000) ; where to put the data
 
-(label addr)
-  (dw 0x8000)
-
-(label text)
-  (db "hello" #\nl 0)
-
 (label main)
   (display boot_msg) ; Print welcome message
 
@@ -78,9 +72,7 @@
   (xor #A #A)
   (xor #B #B)
 
-  (ldw #D addr) ; Lmao
-
-  (jmp #D)
+  (jmp 0x8000)
 
   (loop) ; loop forever
 
