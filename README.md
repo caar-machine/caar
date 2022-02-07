@@ -3,7 +3,7 @@
 
 CAAR is an attempt at writing a modern [Lisp machine](https://en.wikipedia.org/wiki/Lisp_machine).
 
-The goal of this project is to be able to run a somewhat functional operating system written fully in R5RS Scheme.
+The goal of this project is to be able to run a somewhat functional operating system written fully in Scheme.
 
 ## Todo
 ### Emulator
@@ -22,6 +22,6 @@ The goal of this project is to be able to run a somewhat functional operating sy
 - [ ] Semantic checks
 - [ ] Better preprocessor (nested macros)
 
-### R5RS compiler
+### Scheme compiler
 - [ ] everything
 
