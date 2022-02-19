@@ -1,4 +1,4 @@
-(org 0x8000)
+(org 0x2000)
 (jmp main)
 
 (include "../bios/print.lisp")
@@ -9,7 +9,6 @@
 
 (label COLOR_FG)
   (dw 0xffffff)
-
 
 ; TODO: stop using hardcoded fb size
 (label FB_SIZE)
@@ -93,5 +92,3 @@
 
 (label no_gpu)
   (db "Couldn't find GPU. Halting. " #\nl 0)
-
-

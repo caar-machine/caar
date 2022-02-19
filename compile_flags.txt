@@ -2,3 +2,4 @@
 -Isrc/vm
 -I.
 -Isrc/as
+-Isrc/scm

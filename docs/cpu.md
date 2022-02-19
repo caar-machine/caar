@@ -34,7 +34,7 @@ The following is the list of cpu opcodes:
 | --------- | -------- | ---------------- | ---------------------------------------------------------------- |
 | 00 (0x00) | CONS     | reg, reg/val     | CONStruct a pair of two cells, address stored in first parameter |
 | 01 (0x01) | CAR      | reg, addr        | Get first element of cell, stored in first parameter             |
-| 02 (0x02) | CDR      | reg, addr        | Get second element of cell, stored in first parameter            |
+| 02 (0x02) | CDR      | reg, addr        | Get element of cell, stored in first parameter                   |
 | 03 (0x03) | NOP      |                  | No OPeration                                                     |
 | 04 (0x04) | LDR      | reg, addr        | Load addr into reg                                               |
 | 05 (0x05) | STR      | reg/val, addr    | Store val at address                                             |

@@ -214,6 +214,7 @@ int main(int argc, char **argv)
         {
             gpu_update();
         }
+
         tick_end = SDL_GetTicks();
 
         int time_left = 1000 / ticks_per_second - (int)(tick_end - tick_start);

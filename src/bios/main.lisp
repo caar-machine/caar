@@ -24,7 +24,7 @@
 (label disk_command)
   (db 0) ; Read
   (db 1) ; One sector
-  (dw 0x8000) ; where to put the data
+  (dw 0x2000) ; where to put the data
 
 (label main)
   (display boot_msg) ; Print welcome message
@@ -76,7 +76,7 @@
 
   (livt ivt)
 
-  (jmp 0x8000)
+  (jmp 0x2000)
 
   (loop) ; loop forever
 
