@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <ivt.h>
+#include <stdlib.h>
 
 static Ivt ivt = {0};
 

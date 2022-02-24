@@ -34,6 +34,7 @@
     (xor #C #C)
     (ret)
 
+
 (label main)
   (display searching_gpu)
 
@@ -54,10 +55,9 @@
   (ldw #D #B) ; Load it into D
   (ldw #D #D)  ; Getting framebuffer
 
-  (xor #C #C) ; Making sure C is 0
+  (xor #C #C)
 
   (call fill-screen)
-
   (display hello)
 
   (loop)

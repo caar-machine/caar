@@ -67,7 +67,52 @@ void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
     cpu->PL = 0;
 }
 
-void cons(Cpu *cpu)
+void cpu_do_cycle(Cpu *cpu)
+{
+    static const void *ops[] = {
+        [0x0] = &&cons,
+        [0x1] = &&car,
+        [0x2] = &&cdr,
+        [0x3] = &&nop,
+        [0x4] = &&ldr,
+        [0x5] = &&str,
+        [0x6] = &&add,
+        [0x7] = &&sub,
+        [0x8] = &&div,
+        [0x9] = &&mul,
+        [0xA] = &&mod,
+        [0xB] = &&not,
+        [0xC] = &&and,
+        [0xD] = && or
+        ,
+        [0xE] = &&xor,
+        [0xF] = &&push,
+        [0x10] = &&pop,
+        [0x11] = &&jmp,
+        [0x12] = &&cmp,
+        [0x13] = &&je,
+        [0x14] = &&jne,
+        [0x15] = &&jlt,
+        [0x16] = &&jgt,
+        [0x17] = &&in,
+        [0x18] = &&out,
+        [0x19] = &&stw,
+        [0x1A] = &&ldw,
+        [0x1B] = &&int_,
+
+    };
+
+    uint8_t opcode = fetch(cpu);
+
+    if (opcode > 0x1B)
+    {
+        ivt_trigger_interrupt(0, false, cpu);
+        return;
+    }
+
+    goto *ops[opcode];
+
+cons:
 {
     CPU_GET_LHS_AND_RHS();
 
@@ -81,26 +126,24 @@ void cons(Cpu *cpu)
     set_from_special_byte((uint64_t)buffer - (uint64_t)cpu->ram->buffer, cpu);
 
     cpu->PC = new_prev + 1;
-}
+};
 
-void car(Cpu *cpu)
+car: // car
 {
     CPU_CELL_OP(car);
-}
+};
 
-void cdr(Cpu *cpu)
+cdr: // cdr
 {
     CPU_CELL_OP(cdr);
-}
+};
 
-void nop(Cpu *cpu)
+nop: // nop
 {
-    (void)cpu;
-}
+};
 
-void ldr(Cpu *cpu)
+ldr: // LDR
 {
-
     CPU_GET_LHS_AND_RHS();
 
     (void)lhs;
@@ -114,84 +157,84 @@ void ldr(Cpu *cpu)
     set_from_special_byte(value, cpu);
 
     cpu->PC = new_prev;
-}
+};
 
-void str(Cpu *cpu)
+str: // STR
 {
     CPU_GET_LHS_AND_RHS();
 
     bus_write(lhs, rhs, MEM_BYTE, cpu->ram, cpu->bus);
-}
+};
 
-void add(Cpu *cpu)
+add: // Add
 {
-    CPU_OP(+);
-}
 
-void sub(Cpu *cpu)
+    CPU_OP(+);
+};
+
+sub: // sub
 {
     CPU_OP(-);
-}
+};
 
-void _div(Cpu *cpu)
+div: // div
 {
     CPU_OP(/);
-}
+};
 
-void mul(Cpu *cpu)
+mul: // mul
 {
     CPU_OP(*);
-}
+};
 
-void mod(Cpu *cpu)
+mod: // mod
 {
     CPU_OP(%);
-}
+};
 
-void not(Cpu * cpu)
-{
-    CPU_SOP(~);
-}
+    not: // not
+    {
+        CPU_SOP(~);
+    };
 
-void and (Cpu * cpu)
-{
-    CPU_OP(&);
-}
+    and: // and
+    {
+        CPU_OP(&);
+    };
 
-void _or(Cpu *cpu)
-{
-    CPU_OP(|);
-}
+    or: // or
+    {
+        CPU_OP(|);
+    };
 
-void _xor(Cpu *cpu)
-{
-    CPU_OP(^);
-}
+    xor: // xor
+    {
+        CPU_OP(^);
+    };
 
-void _push(Cpu *cpu)
+push: // push
 {
     uint32_t inst_size = 0;
     uint32_t val = get_val_from_special_byte(&inst_size, cpu);
 
     push(val, cpu);
-}
+};
 
-void _pop(Cpu *cpu)
+pop: // pop
 {
     pop_from_special_byte(cpu);
-}
+};
 
-void jmp(Cpu *cpu)
+jmp: // JMP
 {
-
+    info("we do a little jumping");
     uint32_t addr = get_val_from_special_byte(NULL, cpu);
 
     cpu->PC = addr;
-}
+};
 
-void cmp(Cpu *cpu)
+cmp: // CMP
 {
-
     CPU_GET_LHS_AND_RHS();
 
     if (lhs == rhs)
@@ -213,43 +256,42 @@ void cmp(Cpu *cpu)
     }
 
     cpu->PC = new_prev;
-}
+};
 
-void je(Cpu *cpu)
+je: // JE
 {
 
     uint32_t addr = get_val_from_special_byte(NULL, cpu);
 
     if (cpu->flags.EQ == 1)
         cpu->PC = addr;
-}
+};
 
-void jne(Cpu *cpu)
+jne: // JNE
 {
-
     uint32_t addr = get_val_from_special_byte(NULL, cpu);
 
     if (cpu->flags.EQ == 0)
         cpu->PC = addr;
-}
+};
 
-void jlt(Cpu *cpu)
+jlt: // JLT
 {
     uint32_t addr = get_val_from_special_byte(NULL, cpu);
 
     if (cpu->flags.LT == 1)
         cpu->PC = addr;
-}
+};
 
-void jgt(Cpu *cpu)
+jgt: // JGT
 {
     uint32_t addr = get_val_from_special_byte(NULL, cpu);
 
     if (cpu->flags.LT == 0 && cpu->flags.EQ == 0)
         cpu->PC = addr;
-}
+};
 
-void in(Cpu *cpu)
+in: // IN
 {
     CPU_GET_LHS_AND_RHS();
 
@@ -260,24 +302,24 @@ void in(Cpu *cpu)
     set_from_special_byte(io_read(rhs), cpu);
 
     cpu->PC = new_prev;
-}
+};
 
-void out(Cpu *cpu)
+out: // OUT
 {
+
     CPU_GET_LHS_AND_RHS();
 
     io_write(lhs, rhs);
-}
+};
 
-void stw(Cpu *cpu)
+stw: // STW
 {
-
     CPU_GET_LHS_AND_RHS();
 
     bus_write(lhs, MEM_4_BYTES, rhs, cpu->ram, cpu->bus);
-}
+};
 
-void ldw(Cpu *cpu)
+ldw: // LDW
 {
     CPU_GET_LHS_AND_RHS();
 
@@ -292,48 +334,12 @@ void ldw(Cpu *cpu)
     set_from_special_byte(value, cpu);
 
     cpu->PC = new_prev;
-}
-
-void _int(Cpu *cpu)
-{
-    uint32_t val = get_val_from_special_byte(NULL, cpu);
-    ivt_trigger_interrupt(val, true, cpu);
-}
-
-static void (*ops[])(Cpu *cpu) = {
-    [0] = cons,
-    [1] = car,
-    [2] = cdr,
-    [3] = nop,
-    [4] = ldr,
-    [5] = str,
-    [6] = add,
-    [7] = sub,
-    [8] = _div,
-    [9] = mul,
-    [0xA] = mod,
-    [0xB] = not,
-    [0xC] = and,
-    [0xD] = _or,
-    [0xE] = _xor,
-    [0xF] = _push,
-    [0x10] = _pop,
-    [0x11] = jmp,
-    [0x12] = cmp,
-    [0x13] = je,
-    [0x14] = jne,
-    [0x15] = jlt,
-    [0x16] = jgt,
-    [0x17] = in,
-    [0x18] = out,
-    [0x19] = stw,
-    [0x1a] = ldw,
-    [0x1b] = _int,
 };
 
-void cpu_do_cycle(Cpu *cpu)
+int_: // Int
 {
-    uint8_t opcode = fetch(cpu);
+    uint32_t val = get_val_from_special_byte(NULL, cpu);
 
-    ops[opcode](cpu);
+    ivt_trigger_interrupt(val, true, cpu);
+};
 }

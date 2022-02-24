@@ -33,6 +33,7 @@ void gpu_write(uint32_t data, Ram *ram)
 
 void gpu_update()
 {
+
     SDL_UpdateTexture(current_gpu.texture, NULL, current_gpu.pixels, current_gpu.width * sizeof(uint32_t));
     SDL_RenderCopy(current_gpu.renderer, current_gpu.texture, NULL, NULL);
     SDL_RenderPresent(current_gpu.renderer);
@@ -43,13 +44,13 @@ void gpu_init(int width, int height, Bus *bus)
     SDL_Init(SDL_INIT_VIDEO);
 
     current_gpu.window = SDL_CreateWindow("CAAR", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height,
-                                          SDL_WINDOW_SHOWN);
+                                          0);
     current_gpu.width = width;
     current_gpu.height = height;
 
     current_gpu.renderer = SDL_CreateRenderer(current_gpu.window, -1,
                                               SDL_RENDERER_ACCELERATED);
-    current_gpu.pixels = calloc(width * height, 1);
+    current_gpu.pixels = calloc(FB_SIZE, 1);
 
     current_gpu.texture = SDL_CreateTexture(current_gpu.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, width, height);
 

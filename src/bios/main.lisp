@@ -73,7 +73,6 @@
   (xor #A #A)
   (xor #B #B)
 
-
   (livt ivt)
 
   (jmp 0x2000)

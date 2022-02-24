@@ -39,12 +39,18 @@ void ram_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram)
 {
     void *mem = ram->buffer + addr;
 
-    if (size == MEM_BYTE)
+    switch (size)
+    {
+    case MEM_BYTE:
         *value = *(uint8_t *)mem;
-    else if (size == MEM_2_BYTES)
+        break;
+    case MEM_2_BYTES:
         *value = *(uint16_t *)mem;
-    else if (size == MEM_4_BYTES)
+        break;
+    case MEM_4_BYTES:
         *value = *(uint32_t *)mem;
+        break;
+    }
 }
 
 void *ram_allocate(Ram *ram)
