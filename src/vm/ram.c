@@ -1,3 +1,4 @@
+#include <lib/log.h>
 #include <ram.h>
 #include <stdio.h>
 #include <stdlib.h>

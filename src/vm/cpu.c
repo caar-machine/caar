@@ -35,7 +35,7 @@
     uint32_t val = decode(fetch(cpu), false, cpu).val;
 
 #define CPU_SET_VAL() \
-    uint32_t *val = decode(fetch(cpu), false, cpu).ptr;
+    uint32_t *val = decode(fetch(cpu), true, cpu).ptr;
 
 uint8_t fetch(Cpu *cpu)
 {
@@ -98,34 +98,45 @@ void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
     cpu->flags.PL = 0;
 }
 
+uint8_t extract_bits(uint8_t number, int k, int p)
+{
+    return (((1 << k) - 1) & (number >> (p - 1)));
+}
+
 InstructionDecoding decode(uint8_t byte, bool set, Cpu *cpu)
 {
-    InstructionEncoding encoding = *(InstructionEncoding *)&byte;
+    uint8_t param_type = extract_bits(byte, 2, 1);
+
+    uint8_t value = extract_bits(byte, 6, 3);
+
+    if (value == 32)
+        value -= 30;
+
+    //info("byte=%x, value=%x,param_type=%x", byte, value, param_type);
+
     InstructionDecoding ret = {0};
 
-    info("val: %x, param_type: %x", (encoding.value) | 0b0000, encoding.param_type);
-    cpu->regs[CPU_PC]++;
-
-    if (encoding.param_type == 0)
+    if (param_type == 0 || param_type == 1)
     {
         ret.type = set ? DECODE_IMM : DECODE_REG;
-        if (set)
-            ret.ptr = &cpu->regs[encoding.value];
-        else
-            ret.val = cpu->regs[encoding.value];
 
-        cpu->regs[CPU_PC]++;
+        if (set)
+        {
+            ret.ptr = &cpu->regs[value];
+        }
+        else
+        {
+            ret.val = cpu->regs[value];
+        }
     }
 
-    else if (encoding.param_type == 2)
+    else if (param_type == 2)
     {
         ret.type = DECODE_IMM;
 
-        ram_read(cpu->regs[CPU_PC], encoding.value, &ret.val, cpu->ram);
+        ram_read(cpu->regs[CPU_PC], value, &ret.val, cpu->ram);
 
-        info("Adding %x to pc", (encoding.value == 2 ? 4 : encoding.value + 1));
-
-        cpu->regs[CPU_PC] += (encoding.value == 2 ? 4 : encoding.value + 1);
+        cpu->regs[CPU_PC] += (value == 2 ? 4 : (value) + 1);
     }
 
     return ret;
@@ -233,7 +244,9 @@ void _pop(Cpu *cpu)
 {
     CPU_SET_VAL();
 
-    *val = pop(cpu);
+    uint8_t popped = pop(cpu);
+
+    *val = popped;
 }
 
 void jmp(Cpu *cpu)
@@ -241,7 +254,6 @@ void jmp(Cpu *cpu)
 
     CPU_GET_VAL();
 
-    info("%x", val);
     cpu->regs[CPU_PC] = val;
 }
 
