@@ -8,22 +8,22 @@ Addresses are 32 bit
 There are 8 general registers and 6 special ones:
 
 ```
-A,B,C,D,E,F,G,H -> General
+r0,r1,r2,r3,r4,r5,r6,r7 -> General
 
 PC -> Program Counter
 SP -> Stack Pointer
 
 IVT -> Points to the IVT
 PT -> page table
-PL -> Privilege level
 PF -> Set to the address where a pagefault occured
 ```
 
 ## Flags
 ```
 EQ -> Set after a CMP instruction if the operands are equal
-
 LT -> Set after a CMP instruction if the first operand is smaller than the second one
+PL -> clear if supervisor mode, set if user.
+
 ```
 
 ## Opcodes
@@ -63,16 +63,41 @@ The following is the list of cpu opcodes:
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.
-therefore, `(add A 2)` is `0x6 0x1b 0x1a 0x27 2` (add + A + immediate value + byte + 2)
 
-| Value               | Type                   |
-| ------------------- | ---------------------- |
-| 26     (0x1A)       | Immediate value        |
-| 27..40 (0x1B..0x28) | Registers from A to PF |
-| 37     (0x29)       | Address dereference    |
-| 38     (0x2a)       | One byte               |
-| 39     (0x2b)       | Two bytes              |
-| 40     (0x2c)       | Three bytes            |
-| 41     (0x2d)       | Four bytes             |
+Here is the byte's format:
 
-`(add [1] 2)` is `0x6 0x26 1 0x1a 2`
+`0b[param_type, 2 bits][register or number of bytes in imm, 6 bits]`
+the param_type field is 2 bits and can represent the following values:
+
+| Value (Binary) | Value type          |
+| -------------- | ------------------- |
+| 0b00           | register            |
+| 0b10           | immediate value     |
+| 0b11           | Address dereference |
+
+the value field is 6 bits and can represent the following values:
+
+| Value (Binary) | Value type |
+| -------------- | ---------- |
+| 0b000000       | 1 byte     |
+| 0b000001       | 2 bytes    |
+| 0b000010       | 4 bytes    |
+| 0b000011       | 8 bytes    |
+
+if the type is an immediate value, or if the type is register, it can represent the following values:
+
+| Value (Binary) | Value type   |
+| -------------- | ------------ |
+| 0b000000       | register r0  |
+| 0b000001       | register r1  |
+| 0b000010       | register r2  |
+| 0b000011       | register r3  |
+| 0b000100       | register r4  |
+| 0b000101       | register r5  |
+| 0b000110       | register r6  |
+| 0b000111       | register r7  |
+| 0b001000       | register SP  |
+| 0b001001       | register PC  |
+| 0b001011       | register IVT |
+| 0b001011       | register PT  |
+| 0b001100       | register PF  |

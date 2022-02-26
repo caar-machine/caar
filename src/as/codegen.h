@@ -44,4 +44,10 @@ typedef struct
     Macro *current_macro;
 } Assembler;
 
+typedef struct __attribute__((packed))
+{
+    uint8_t param_type : 2;
+    uint8_t value : 6;
+} InstructionEncoding;
+
 #endif

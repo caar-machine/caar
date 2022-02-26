@@ -5,7 +5,10 @@
 #include <dev/bus.h>
 #include <stdbool.h>
 
-#define FB_SIZE 0xc0000
+#define FB_WIDTH 1024
+#define FB_HEIGHT 768
+#define FB_SIZE FB_WIDTH *FB_HEIGHT
+
 #define FB_ADDRESS (uint32_t)(MEMORY_SIZE - STACK_SIZE - FB_SIZE)
 
 typedef struct
@@ -23,5 +26,7 @@ void gpu_draw(uint32_t pixel, uint32_t addr);
 void gpu_update();
 
 bool gpu_active();
+
+Gpu get_gpu();
 
 #endif

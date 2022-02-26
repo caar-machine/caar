@@ -167,7 +167,7 @@ int main(int argc, char **argv)
 
     int size = load_file(file, &ram);
 
-    gpu_init(1024, 768, &bus);
+    gpu_init(FB_WIDTH, FB_HEIGHT, &bus);
     disk_init(&bus);
 
     cpu_init(&ram, &bus, &cpu, size);

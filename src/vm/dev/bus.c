@@ -100,7 +100,7 @@ void bus_read(uint32_t addr, MemSize size, uint32_t *value, Ram *ram, Bus *bus)
 
     else
     {
-        ram_read(addr, size, value, ram);
+        ram_read(addr, size, (uint32_t *)value, ram);
     }
 
     return;

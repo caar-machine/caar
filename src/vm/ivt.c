@@ -1,4 +1,3 @@
-#include "utils.h"
 #include <ivt.h>
 #include <stdlib.h>
 
@@ -18,22 +17,22 @@ void ivt_set(uint32_t address, Ram *ram)
 
 void ivt_trigger_interrupt(int interrupt, bool software, Cpu *cpu)
 {
-    push(cpu->PC, cpu);
+    push(cpu->regs[CPU_PC], cpu);
 
-    if (software && ivt.entries[interrupt].dpl < cpu->PL)
+    if (software && ivt.entries[interrupt].dpl < cpu->flags.PL)
     {
         error("TODO: cpu faults");
     }
 
     if (ivt.entries[interrupt].used)
     {
-        cpu->PC = ivt.entries[interrupt].address;
+        cpu->regs[CPU_PC] = ivt.entries[interrupt].address;
     }
 
     else
     {
         warn("Unhandled interrupt: %d", interrupt);
 
-        cpu->PC = pop(cpu);
+        cpu->regs[CPU_PC] = pop(cpu);
     }
 }

@@ -18,6 +18,11 @@ bool gpu_active()
     return active;
 }
 
+Gpu get_gpu()
+{
+    return current_gpu;
+}
+
 void gpu_draw(uint32_t pixel, uint32_t addr)
 {
     current_gpu.pixels[addr - FB_ADDRESS] = pixel;

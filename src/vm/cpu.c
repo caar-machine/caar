@@ -7,80 +7,140 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <utils.h>
 
-#define CPU_OP(OP)                                              \
-    uint32_t start_pc = cpu->PC;                                \
-    (void)start_pc;                                             \
-    uint32_t inst_size = 0;                                     \
-    uint32_t op_a = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t op_b = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t new_prev = cpu->PC;                                \
-    cpu->PC = start_pc;                                         \
-    set_from_special_byte(op_a OP op_b, cpu);                   \
-    cpu->PC = new_prev;
+#define CPU_OP(OP)                                     \
+    uint32_t *ptr = decode(fetch(cpu), true, cpu).ptr; \
+    uint32_t rhs = decode(fetch(cpu), false, cpu).val; \
+    *ptr = *ptr OP rhs;
 
-#define CPU_SOP(OP)                                             \
-    uint32_t start_pc = cpu->PC;                                \
-    (void)start_pc;                                             \
-    uint32_t inst_size = 0;                                     \
-    get_val_from_special_byte(&inst_size, cpu);                 \
-    uint32_t prev_pc = cpu->PC += inst_size;                    \
-    uint32_t op_b = get_val_from_special_byte(&inst_size, cpu); \
-    cpu->PC = start_pc;                                         \
-    set_from_special_byte(OP op_b, cpu);                        \
-    cpu->PC = prev_pc;
+#define CPU_SOP(OP)                                    \
+    uint32_t *ptr = decode(fetch(cpu), true, cpu).ptr; \
+    uint32_t rhs = decode(fetch(cpu), false, cpu).val; \
+    *ptr = OP rhs;
 
-#define CPU_CELL_OP(TYPE)                                                \
-    uint32_t start_pc = cpu->PC;                                         \
-    (void)start_pc;                                                      \
-    uint32_t inst_size = 0;                                              \
-    get_val_from_special_byte(&inst_size, cpu);                          \
-    uint32_t prev_pc = cpu->PC += inst_size;                             \
-    uint32_t rhs = get_val_from_special_byte(&inst_size, cpu);           \
-    uint32_t new_prev = prev_pc + inst_size;                             \
-    cpu->PC = start_pc;                                                  \
-    Cons *buffer = (Cons *)((uint64_t)rhs + (uint64_t)cpu->ram->buffer); \
-    set_from_special_byte(buffer->TYPE, cpu);                            \
-    cpu->PC = new_prev;
+#define CPU_CELL_OP(TYPE)                              \
+    uint32_t lhs = decode(fetch(cpu), true, cpu).val;  \
+    uint32_t rhs = decode(fetch(cpu), false, cpu).val; \
+    ram_write(lhs + offsetof(Cons, TYPE), MEM_4_BYTES, rhs, cpu->ram);
 
-#define CPU_GET_LHS_AND_RHS()                                  \
-    uint32_t start_pc = cpu->PC;                               \
-    (void)start_pc;                                            \
-    uint32_t inst_size = 0;                                    \
-    uint32_t lhs = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t prev_pc = cpu->PC;                                \
-    uint32_t rhs = get_val_from_special_byte(&inst_size, cpu); \
-    uint32_t new_prev = cpu->PC;                               \
-    (void)prev_pc;                                             \
-    (void)new_prev;
+#define CPU_GET_LHS_AND_RHS()                          \
+    uint32_t lhs = decode(fetch(cpu), false, cpu).val; \
+    uint32_t rhs = decode(fetch(cpu), false, cpu).val;
+
+#define CPU_GET_LHS_AND_SET_RHS()                      \
+    uint32_t *lhs = decode(fetch(cpu), true, cpu).ptr; \
+    uint32_t rhs = decode(fetch(cpu), false, cpu).val;
+
+#define CPU_GET_VAL() \
+    uint32_t val = decode(fetch(cpu), false, cpu).val;
+
+#define CPU_SET_VAL() \
+    uint32_t *val = decode(fetch(cpu), false, cpu).ptr;
+
+uint8_t fetch(Cpu *cpu)
+{
+    uint32_t value = 0;
+
+    ram_read(cpu->regs[CPU_PC]++, MEM_BYTE, &value, cpu->ram);
+
+    return value;
+}
+
+void push(uint32_t what, Cpu *cpu)
+{
+    cpu->regs[CPU_SP] -= 4;
+
+    if (cpu->regs[CPU_SP] == STACK_SIZE)
+    {
+        error("stack overflow");
+    }
+
+    if (what > 255)
+    {
+        uint8_t *a = (uint8_t *)&what;
+
+        ram_write(cpu->regs[CPU_SP] - 1, MEM_BYTE, a[0], cpu->ram);
+        ram_write(cpu->regs[CPU_SP] - 2, MEM_BYTE, a[1], cpu->ram);
+        ram_write(cpu->regs[CPU_SP] - 3, MEM_BYTE, a[2], cpu->ram);
+        ram_write(cpu->regs[CPU_SP] - 4, MEM_BYTE, a[3], cpu->ram);
+    }
+
+    else
+        ram_write(cpu->regs[CPU_SP] - 4, MEM_BYTE, what, cpu->ram);
+}
+
+uint32_t pop(Cpu *cpu)
+{
+
+    if (cpu->regs[CPU_SP] > MEMORY_SIZE)
+    {
+        error("pop() out of bounds");
+        return 0;
+    }
+
+    uint32_t ret = 0;
+    ram_read(cpu->regs[CPU_SP] - 4, MEM_4_BYTES, &ret, cpu->ram);
+
+    cpu->regs[CPU_SP] += 4;
+
+    return ret;
+}
 
 void cpu_init(Ram *ram, Bus *bus, Cpu *cpu, size_t rom_size)
 {
     cpu->ram = ram;
     cpu->bus = bus;
-    cpu->SP = MEMORY_SIZE;
-    cpu->PC = 0x1000;
+    cpu->regs[CPU_SP] = MEMORY_SIZE;
+    cpu->regs[CPU_PC] = 0x1000;
     cpu->rom_size = rom_size;
     cpu->flags.EQ = 0;
     cpu->flags.LT = 0;
-    cpu->PL = 0;
+    cpu->flags.PL = 0;
+}
+
+InstructionDecoding decode(uint8_t byte, bool set, Cpu *cpu)
+{
+    InstructionEncoding encoding = *(InstructionEncoding *)&byte;
+    InstructionDecoding ret = {0};
+
+    info("val: %x, param_type: %x", (encoding.value) | 0b0000, encoding.param_type);
+    cpu->regs[CPU_PC]++;
+
+    if (encoding.param_type == 0)
+    {
+        ret.type = set ? DECODE_IMM : DECODE_REG;
+        if (set)
+            ret.ptr = &cpu->regs[encoding.value];
+        else
+            ret.val = cpu->regs[encoding.value];
+
+        cpu->regs[CPU_PC]++;
+    }
+
+    else if (encoding.param_type == 2)
+    {
+        ret.type = DECODE_IMM;
+
+        ram_read(cpu->regs[CPU_PC], encoding.value, &ret.val, cpu->ram);
+
+        info("Adding %x to pc", (encoding.value == 2 ? 4 : encoding.value + 1));
+
+        cpu->regs[CPU_PC] += (encoding.value == 2 ? 4 : encoding.value + 1);
+    }
+
+    return ret;
 }
 
 void cons(Cpu *cpu)
 {
-    CPU_GET_LHS_AND_RHS();
+    CPU_GET_LHS_AND_SET_RHS();
 
     Cons *buffer = ram_allocate(cpu->ram);
 
-    buffer->car = lhs;
+    buffer->car = *lhs;
     buffer->cdr = rhs;
 
-    cpu->PC = start_pc;
-
-    set_from_special_byte((uint64_t)buffer - (uint64_t)cpu->ram->buffer, cpu);
-
-    cpu->PC = new_prev + 1;
+    *lhs = (uint64_t)buffer - (uint64_t)cpu->ram->buffer;
 }
 
 void car(Cpu *cpu)
@@ -101,19 +161,13 @@ void nop(Cpu *cpu)
 void ldr(Cpu *cpu)
 {
 
-    CPU_GET_LHS_AND_RHS();
-
-    (void)lhs;
+    CPU_GET_LHS_AND_SET_RHS();
 
     uint32_t value = 0;
 
     bus_read(rhs, MEM_BYTE, &value, cpu->ram, cpu->bus);
 
-    cpu->PC = start_pc;
-
-    set_from_special_byte(value, cpu);
-
-    cpu->PC = new_prev;
+    *lhs = value;
 }
 
 void str(Cpu *cpu)
@@ -170,23 +224,25 @@ void _xor(Cpu *cpu)
 
 void _push(Cpu *cpu)
 {
-    uint32_t inst_size = 0;
-    uint32_t val = get_val_from_special_byte(&inst_size, cpu);
+    CPU_GET_VAL();
 
     push(val, cpu);
 }
 
 void _pop(Cpu *cpu)
 {
-    pop_from_special_byte(cpu);
+    CPU_SET_VAL();
+
+    *val = pop(cpu);
 }
 
 void jmp(Cpu *cpu)
 {
 
-    uint32_t addr = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
 
-    cpu->PC = addr;
+    info("%x", val);
+    cpu->regs[CPU_PC] = val;
 }
 
 void cmp(Cpu *cpu)
@@ -211,55 +267,46 @@ void cmp(Cpu *cpu)
     {
         cpu->flags.LT = 0;
     }
-
-    cpu->PC = new_prev;
 }
 
 void je(Cpu *cpu)
 {
-
-    uint32_t addr = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
 
     if (cpu->flags.EQ == 1)
-        cpu->PC = addr;
+        cpu->regs[CPU_PC] = val;
 }
 
 void jne(Cpu *cpu)
 {
 
-    uint32_t addr = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
 
     if (cpu->flags.EQ == 0)
-        cpu->PC = addr;
+        cpu->regs[CPU_PC] = val;
 }
 
 void jlt(Cpu *cpu)
 {
-    uint32_t addr = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
 
     if (cpu->flags.LT == 1)
-        cpu->PC = addr;
+        cpu->regs[CPU_PC] = val;
 }
 
 void jgt(Cpu *cpu)
 {
-    uint32_t addr = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
 
     if (cpu->flags.LT == 0 && cpu->flags.EQ == 0)
-        cpu->PC = addr;
+        cpu->regs[CPU_PC] = val;
 }
 
 void in(Cpu *cpu)
 {
-    CPU_GET_LHS_AND_RHS();
+    CPU_GET_LHS_AND_SET_RHS();
 
-    (void)lhs;
-
-    cpu->PC = start_pc;
-
-    set_from_special_byte(io_read(rhs), cpu);
-
-    cpu->PC = new_prev;
+    *lhs = io_read(rhs);
 }
 
 void out(Cpu *cpu)
@@ -271,7 +318,6 @@ void out(Cpu *cpu)
 
 void stw(Cpu *cpu)
 {
-
     CPU_GET_LHS_AND_RHS();
 
     bus_write(lhs, MEM_4_BYTES, rhs, cpu->ram, cpu->bus);
@@ -279,7 +325,7 @@ void stw(Cpu *cpu)
 
 void ldw(Cpu *cpu)
 {
-    CPU_GET_LHS_AND_RHS();
+    CPU_GET_LHS_AND_SET_RHS();
 
     (void)lhs;
 
@@ -287,16 +333,12 @@ void ldw(Cpu *cpu)
 
     bus_read(rhs, MEM_4_BYTES, &value, cpu->ram, cpu->bus);
 
-    cpu->PC = start_pc;
-
-    set_from_special_byte(value, cpu);
-
-    cpu->PC = new_prev;
+    *lhs = value;
 }
 
 void _int(Cpu *cpu)
 {
-    uint32_t val = get_val_from_special_byte(NULL, cpu);
+    CPU_GET_VAL();
     ivt_trigger_interrupt(val, true, cpu);
 }
 
@@ -335,5 +377,13 @@ void cpu_do_cycle(Cpu *cpu)
 {
     uint8_t opcode = fetch(cpu);
 
-    ops[opcode](cpu);
+    if (opcode > 0x1b)
+    {
+        ivt_trigger_interrupt(0, false, cpu);
+        error("Invalid opcode: %x", opcode);
+    }
+    else
+    {
+        ops[opcode](cpu);
+    }
 }

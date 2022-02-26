@@ -5,6 +5,17 @@
 #include <lib/map.h>
 #include <stdbool.h>
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)       \
+    (byte & 0x80 ? '1' : '0'),     \
+        (byte & 0x40 ? '1' : '0'), \
+        (byte & 0x20 ? '1' : '0'), \
+        (byte & 0x10 ? '1' : '0'), \
+        (byte & 0x08 ? '1' : '0'), \
+        (byte & 0x04 ? '1' : '0'), \
+        (byte & 0x02 ? '1' : '0'), \
+        (byte & 0x01 ? '1' : '0')
+
 #define OPCODES_MAP(what)        \
     map_set(what, "cons", 0x00); \
     map_set(what, "car", 0x01);  \
@@ -61,8 +72,9 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
 
         if (!defining)
         {
-            vec_push(&as->bytes, 0x1A);
-            vec_push(&as->bytes, (val > 0xFFFFFF) ? 0x2d : ((val > 0x00FFFF) ? 0x2c : ((val > 0x0000FF) ? 0x2b : 0x2a)));
+            uint8_t byte = (val > 0xFFFFFF) ? 0b10000010 : ((val > 0x0000FF) ? 0b10000001 : 0b10000000);
+
+            vec_push(&as->bytes, byte);
         }
 
         Byte *_bytes = (Byte *)&val;
@@ -78,14 +90,6 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
                 vec_push(&as->bytes, _bytes[1]);
                 vec_push(&as->bytes, _bytes[2]);
                 vec_push(&as->bytes, _bytes[3]);
-            }
-            else if (val > 0xFFFF)
-            {
-
-                // three bytes
-                vec_push(&as->bytes, _bytes[0]);
-                vec_push(&as->bytes, _bytes[1]);
-                vec_push(&as->bytes, _bytes[2]);
             }
             else if (val > 0xFF)
             {
@@ -115,8 +119,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
     {
         if (!defining)
         {
-            vec_push(&as->bytes, 0x1A);
-            vec_push(&as->bytes, 0x2D);
+            vec_push(&as->bytes, 0b10000010);
         }
 
         char *what = value.symbol_;
@@ -161,7 +164,12 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
 
     case AST_VAL_REG:
     {
-        vec_push(&as->bytes, 0x1B + value.reg_);
+        uint8_t byte = 0b00;
+        uint8_t reg = value.reg_;
+        uint8_t result = (byte << 2) | reg;
+
+        vec_push(&as->bytes, result);
+
         break;
     }
     }
