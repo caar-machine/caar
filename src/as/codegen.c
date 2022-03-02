@@ -44,7 +44,9 @@
     map_set(what, "out", 0x18);  \
     map_set(what, "stw", 0x19);  \
     map_set(what, "ldw", 0x1A);  \
-    map_set(what, "int", 0x1B);
+    map_set(what, "int", 0x1B);  \
+    map_set(what, "call", 0x1C); \
+    map_set(what, "mov", 0x1D);
 
 char *str_to_lower(char *str)
 {
@@ -72,7 +74,7 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
 
         if (!defining)
         {
-            uint8_t byte = (val > 0xFFFFFF) ? 0b10000010 : ((val > 0x0000FF) ? 0b10000001 : 0b10000000);
+            uint8_t byte = (val > 0xFFFF) ? 0b10000010 : ((val > 0x0000FF) ? 0b10000001 : 0b10000000);
 
             vec_push(&as->bytes, byte);
         }
@@ -82,14 +84,14 @@ void codegen_expr(AstValue value, Assembler *as, bool defining, bool is_macro, b
         if (!word)
         {
             // Get size of value
-            if (val > 0xFFFFFF)
+            if (val > 0xFFFF)
             {
 
                 // if four bytes, push 4 bytes
                 vec_push(&as->bytes, _bytes[0]);
                 vec_push(&as->bytes, _bytes[1]);
                 vec_push(&as->bytes, _bytes[2]);
-                vec_push(&as->bytes, _bytes[3]);
+                vec_push(&as->bytes, val > 0xFFFFFF ? _bytes[3] : 0);
             }
             else if (val > 0xFF)
             {

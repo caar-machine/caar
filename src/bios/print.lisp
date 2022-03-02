@@ -18,18 +18,9 @@
 ; Define a macro that takes a parameter named param
 (defmacro display (param)
   ; A = address of string
-  (push param)
-  (pop #A)
+  (mov #A param)
 
   ; B = *A
   (ldr #B #A)
 
-  ; We need to do this in order to return to the right place when popping PC
-  (push #PC)
-  (pop #G)
-
-  ; Adding to PC the number  of bytes the following instructions will take
-  (add #G 0x10) ; :meme:
-  (push #G)
-  ; Actually printing the string
-  (jmp print_str))
+  (call print_str))

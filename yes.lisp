@@ -1,12 +1,14 @@
 (org 0x1000)
+(jmp lol)
+
+(label str)
+   (db "hello world" #\nl 0)
+
+(include "src/bios/print.lisp")
+(include "src/bios/macros.lisp")
 
 (label lol)
-    (push test)
-    (pop #B)
+   (display str)
+   (display str)
+   (loop)
 
-    (ldr #A #B)
-    (label _test)
-    (jmp _test)
-
-(label test)
-    (dw 0x1000)

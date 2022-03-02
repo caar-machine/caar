@@ -60,6 +60,7 @@ The following is the list of cpu opcodes:
 | 25 (0x19) | STW      | reg/val, addr    | Store word                                                       |
 | 26 (0x1A) | LDW      | reg, addr        | Load word                                                        |
 | 27 (0x1B) | INT      | reg/val          | Trigger interrupt                                                |
+| 28 (0x1C) | CALL     | reg/addr         | Jump and push return address                                     |
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.
