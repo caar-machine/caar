@@ -1,0 +1,6 @@
+[submodule "subprojects/emu"]
+	path = subprojects/emu
+	url = https://github.com/caar-machine/emu
+[submodule "subprojects/bios"]
+	path = subprojects/bios
+	url = https://github.com/caar-machine/bios
