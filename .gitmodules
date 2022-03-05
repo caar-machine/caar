@@ -4,3 +4,6 @@
 [submodule "subprojects/bios"]
 	path = subprojects/bios
 	url = https://github.com/caar-machine/bios
+[submodule "subprojects/as"]
+	path = subprojects/as
+	url = https://github.com/caar-machine/as
