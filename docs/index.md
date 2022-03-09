@@ -1,17 +1,13 @@
-# Welcome to MkDocs
+# CAAR - The modern LISP Machine
 
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
+Welcome to the CAAR documentation! CAAR is a project aiming towards creating a computer designed to run LISP code efficiently.
 
-## Commands
+## Features
 
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
+* High performance emulator written in C++.
+* MISC 32 bit processor.
+* S-expression-based assembler written in C.
+* Work-in-progress BIOS written in assembly that can load a bootsector.
 
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+!!! Note
+	The documentation is still work-in-progress. You can improve it by contributing to the github repository.

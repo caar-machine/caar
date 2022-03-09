@@ -1,3 +1,7 @@
 site_name: CAAR
 theme:
   name: readthedocs
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences

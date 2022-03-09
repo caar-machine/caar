@@ -1,14 +1,11 @@
-# The CAAR CPU
+# CPU
 The CAAR CPU is designed to run LISP code efficiently, by having opcodes such as `CAR`, `CDR` and `CONS`
 
-## Addresses
-Addresses are 32 bit
-
 ## Registers
-There are 8 general registers and 6 special ones:
+There are 9 general registers and 6 special ones for a total of 15:
 
 ```
-r0,r1,r2,r3,r4,r5,r6,r7 -> General
+r0,r1,r2,r3,r4,r5,r6,r7,r8 -> General
 
 PC -> Program Counter
 SP -> Stack Pointer
@@ -23,7 +20,6 @@ PF -> Set to the address where a pagefault occured
 EQ -> Set after a CMP instruction if the operands are equal
 LT -> Set after a CMP instruction if the first operand is smaller than the second one
 PL -> clear if supervisor mode, set if user.
-
 ```
 
 ## Opcodes
@@ -102,3 +98,54 @@ if the type is an immediate value, or if the type is register, it can represent 
 | 0b001011       | register IVT |
 | 0b001011       | register PT  |
 | 0b001100       | register PF  |
+
+## Paging
+
+Addresses are 32 bit.
+!!! Warning
+	This section is **totally** work in progress. Paging is not implemented in the emulator yet.
+
+## Interrupts
+
+An interrupt is a type of signal emitted by hardware or software when an event needs immediate attention.
+
+!!! Example
+	Interrupts could be triggered when a key is pressed (hardware) or to perform a system call (software)
+
+### The IVT
+IVT stands for interrupt vector table, it is a table used to describe how an interrupt should behave, by giving it a certain privilege level or handler
+
+The IVT, in C, would look like this:
+
+```c
+struct IvtEntry
+{
+    uint8_t used : 1; // Whether it is used or not
+    uint8_t dpl : 1; // Minimum privilege level in which the software interrupt can be executed
+    uint32_t address;
+} IvtEntry;
+
+struct Ivt
+{
+    IvtEntry entries[256];
+};
+```
+
+### Interrupt stackframe
+The CPU automatically pushes `PC` when an interrupt occurs, therefore, to return from an interrupt you need to pop `PC`.
+
+### Loading an IVT
+To load an IVT, you can modify the `IVT` register.
+
+!!! Note
+	The `IVT` register is a *protected* register, meaning that it can only be modified in protection level 0
+
+### Hardware interrupts
+| Number   | Description                    |
+| -------- | ------------------------------ |
+| 0        | Invalid opcode (#UD)           |
+| 1        | Page fault (#PF)               |
+| 2        | General Protection fault (#GP) |
+| 3        | Debug                          |
+| 10 (0xA) | Timer interrupt                |
+| 11 (0xB) | Keyboard                       |

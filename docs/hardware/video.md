@@ -1,4 +1,4 @@
-# CAAR GPU
+# GPU
 The CAAR GPU is a simple way to draw graphics.
 
 ## Framebuffer

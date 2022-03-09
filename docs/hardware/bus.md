@@ -1,4 +1,4 @@
-# Device Bus
+# Bus
 The device bus is the bus where every device is connected, similar to pci
 
 ## Structure
