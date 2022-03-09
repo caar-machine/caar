@@ -123,7 +123,7 @@ struct IvtEntry
     uint8_t used : 1; // Whether it is used or not
     uint8_t dpl : 1; // Minimum privilege level in which the software interrupt can be executed
     uint32_t address;
-} IvtEntry;
+};
 
 struct Ivt
 {
