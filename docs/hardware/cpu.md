@@ -93,11 +93,12 @@ if the type is an immediate value, or if the type is register, it can represent 
 | 0b000101       | register r5  |
 | 0b000110       | register r6  |
 | 0b000111       | register r7  |
-| 0b001000       | register SP  |
-| 0b001001       | register PC  |
-| 0b001011       | register IVT |
-| 0b001011       | register PT  |
-| 0b001100       | register PF  |
+| 0b001000       | register r8  |
+| 0b001001       | register SP  |
+| 0b001011       | register PC  |
+| 0b001100       | register IVT |
+| 0b001101       | register PT  |
+| 0b001111       | register PF  |
 
 ## Paging
 
