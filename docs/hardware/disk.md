@@ -14,12 +14,13 @@ struct DiskCommand
 {
 	uint8_t type; // 0 = read, 1 = write, 2 = identify
 	uint8_t sectors; // Number of sectors to read/write
+	uint32_t offset; // Offset
 	uint32_t address; // Where to store the result
 };
 ```
 
 ## Reading
-The `READ` command will read `sectors` sectors and write them to `address`.
+The `READ` command will read `sectors` sectors at `offset` and write them to `address`.
 
 ## Writing
 !!! Warning
