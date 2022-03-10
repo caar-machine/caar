@@ -1,5 +1,5 @@
 project('caar')
 
-subproject('emu')
-subproject('as')
-subproject('bios')
+emu = subproject('emu')
+as = subproject('as')
+bios = subproject('bios')
