@@ -13,7 +13,7 @@ Since managing multiple subprojects is hard to do with a traditional build syste
 * `sdl2`
 
 ## Getting the source code
-Run the following command in your terminal to get the source code (prompt excluded):
+Run the following command in your terminal to get the source code:
 
 ```
 git clone https://github.com/caar-machine/caar --recursive
