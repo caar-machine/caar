@@ -7,3 +7,6 @@
 [submodule "subprojects/as"]
 	path = subprojects/as
 	url = https://github.com/caar-machine/as
+[submodule "subprojects/os"]
+	path = subprojects/os
+	url = https://github.com/caar-machine/os
