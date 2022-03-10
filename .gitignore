@@ -1,5 +1,6 @@
 *.elf
 build
+bin
 *.o
 bios.bin
 *.img
