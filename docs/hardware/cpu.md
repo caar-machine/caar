@@ -57,6 +57,8 @@ The following is the list of cpu opcodes:
 | 26 (0x1A) | LDW      | reg, addr        | Load word                                                        |
 | 27 (0x1B) | INT      | reg/val          | Trigger interrupt                                                |
 | 28 (0x1C) | CALL     | reg/addr         | Jump and push return address                                     |
+| 29 (0x1D) | LSH      | reg, reg/val     | Left shift                                                       |
+| 29 (0x1D) | RSH      | reg, reg/val     | Right shift                                                      |
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.
