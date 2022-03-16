@@ -28,7 +28,7 @@ The following is the list of cpu opcodes:
 
 | Opcode    | Mnemonic | parameters       | Description                                                      |
 | --------- | -------- | ---------------- | ---------------------------------------------------------------- |
-| 00 (0x00) | CONS     | reg, reg/val     | CONStruct a pair of two cells, address stored in first parameter |
+| 00 (0x00) | CONS     | reg, reg/val     | Deprecated                                                       |
 | 01 (0x01) | CAR      | reg, addr        | Get first element of cell, stored in first parameter             |
 | 02 (0x02) | CDR      | reg, addr        | Get element of cell, stored in first parameter                   |
 | 03 (0x03) | NOP      |                  | No OPeration                                                     |
@@ -58,7 +58,7 @@ The following is the list of cpu opcodes:
 | 27 (0x1B) | INT      | reg/val          | Trigger interrupt                                                |
 | 28 (0x1C) | CALL     | reg/addr         | Jump and push return address                                     |
 | 29 (0x1D) | LSH      | reg, reg/val     | Left shift                                                       |
-| 29 (0x1D) | RSH      | reg, reg/val     | Right shift                                                      |
+| 30 (0x1E) | RSH      | reg, reg/val     | Right shift                                                      |
 
 ## Instruction encoding
 Each opcode parameter is followed by a special byte that tells the cpu what type of value it is.
